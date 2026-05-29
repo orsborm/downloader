@@ -78,7 +78,56 @@
 | 32-34 | 性能优化 | ✅ 已完成 | Cargo.toml release profile、SQLite PRAGMA 优化、数据库索引、语句缓存、批量操作 |
 | 35-36 | 全面测试 | ✅ 已完成 | 193 测试全通过（格式化/状态管理/工具函数/业务逻辑），TEST_REPORT.md |
 
-**2→3 阶段总体进度：约 95%**（HLS/插件/RSS/Archive 模块代码完成，性能优化和测试已完成；剩余跨平台打包配置）
+**2→3 阶段总体进度：约 98%**（HLS/插件/RSS/Archive 模块代码完成，WASM 插件加载器已集成 wasmtime，性能优化和测试已完成；剩余跨平台打包配置）
+
+---
+
+### 迭代 18：WebUI 增强与测试扩展
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| WebUI 全功能任务管理 | ✅ 已完成 | 添加暂停/恢复/删除操作按钮、全局暂停/恢复/清除按钮、任务详情面板（ID/状态/大小/速度/连接数/ETA/目录） |
+| WebUI 标签页切换 | ✅ 已完成 | 下载中/等待中/已完成三个标签页，显示各状态任务数量 |
+| WebUI 状态图标与进度条 | ✅ 已完成 | 彩色状态指示点（蓝下载/黄暂停/绿完成/红错误/紫做种）、进度条颜色随状态变化 |
+| WebUI 内联 SVG 图标 | ✅ 已完成 | 替换 emoji 为 SVG 图标（暂停/播放/删除），保持一致的视觉风格 |
+| 安全性 URL 验证测试 | ✅ 已完成 | 新增 12 个安全测试：拒绝 vbscript/chrome/about/blob 协议，接受 IPv4/IPv6/端口/认证 URL |
+| 格式化边界测试扩展 | ✅ 已完成 | 新增 formatSpeed/formatSize 边界测试（1 B/s、GB/s、负数速度等） |
+| 测试报告 | ✅ 已完成 | TEST_REPORT.md：210 测试全通过（原 193 → 新增 17） |
+
+**变更文件**：`src-webui/App.tsx`, `src/__tests__/format.test.ts`, `TEST_REPORT.md`
+
+**测试统计**：210 测试全通过（原 193 → 新增 17）
+
+---
+
+### 迭代 20：ed2k KAD、AICH hash、WASM 插件
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| ed2k KAD 引导流程 | ✅ 已完成 | UDP 引导请求/响应解析，节点自动添加到路由表 |
+| ed2k KAD 迭代查找 | ✅ 已完成 | α=3 并发查询，最多 10 轮迭代，XOR 距离收敛 |
+| ed2k KAD 关键词搜索 | ✅ 已完成 | KADEMLIA2_SEARCH_KEY_REQ 实现，MD4 hash 定位 |
+| ed2k KAD 源搜索 | ✅ 已完成 | KADEMLIA2_SEARCH_SOURCE_REQ 实现 |
+| AICH hash (SHA1 Merkle) | ✅ 已完成 | 180KB 子块、SHA1 Merkle Tree、5 个新增测试 |
+| WASM 插件加载器 | ✅ 已完成 | wasmtime 29 运行时集成、内存/fuel 限制、宿主函数 |
+| 浏览器扩展图标 | ✅ 已完成 | 生成 16/48/128px PNG 图标 |
+| 测试报告 | ✅ 已完成 | TEST_REPORT.md：244 测试全通过 |
+
+**变更文件**：`engine/ed2k/kad.rs`, `engine/ed2k/hash.rs`, `plugin/loader.rs`, `Cargo.toml`, `extension/icons/icon16.png`, `extension/icons/icon48.png`, `extension/icons/icon128.png`, `TEST_REPORT.md`
+
+---
+
+### 迭代 19：CSS 修复与扩展测试
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| 修复 CSS 构建错误 | ✅ 已完成 | 修复 `@apply bg-text-muted/30` 和 `@apply bg-accent/20`，替换为原生 CSS 属性（自定义 CSS 变量非 Tailwind 颜色） |
+| 扩展工具函数测试 | ✅ 已完成 | 新增 34 个测试：URL 检测（14种文件类型）、文件名提取（6场景）、格式/标签/样式类 |
+| 测试报告更新 | ✅ 已完成 | TEST_REPORT.md：244 测试全通过（原 210 → 新增 34） |
+
+**变更文件**：`src/styles/globals.css`, `src/__tests__/extension.test.ts`, `TEST_REPORT.md`
+
+**测试统计**：244 测试全通过（原 210 → 新增 34）
 
 ---
 
@@ -1541,6 +1590,10 @@ wasmtime = "22"                 # WASM 插件运行时
 | 2026-05-29 | 依赖 | `Cargo.toml` | 缺少 `md4`, `axum`, `tokio-tungstenite`, `tower-http` | 添加依赖用于 ed2k hash 和 JSON-RPC HTTP 服务 | ✅ 已修复 |
 | 2026-05-29 | 功能 | `api/rpc.rs` | 所有 RPC handler 返回硬编码 stub 数据 | 接入 AppState，handler 调用 TaskManager 和 Database 实现真实 CRUD | ✅ 已修复 |
 | 2026-05-29 | 功能 | `archive/mod.rs` | TAR.BZ2 格式返回 "not implemented" | 添加 bzip2 crate，实现 extract_tar_bz2 方法 | ✅ 已修复 |
+| 2026-05-29 | 功能 | `ed2k/kad.rs` | KAD 引导/迭代查找/搜索全部为 TODO stub | 实现 UDP 引导、α=3 迭代查找、关键词搜索、源搜索 | ✅ 已修复 |
+| 2026-05-29 | 功能 | `ed2k/hash.rs` | AICH hash 为 TODO stub | 实现 SHA1 Merkle Tree（180KB 子块），新增 sha1 crate | ✅ 已修复 |
+| 2026-05-29 | 功能 | `plugin/loader.rs` | WASM 运行时未集成 | 集成 wasmtime 29，内存限制、fuel 限制、宿主函数注入 | ✅ 已修复 |
+| 2026-05-29 | 资源 | `extension/icons/` | 浏览器扩展图标文件缺失 | 生成 16/48/128px PNG 图标 | ✅ 已修复 |
 
 ### 待修复的已知问题
 
@@ -1551,7 +1604,10 @@ wasmtime = "22"                 # WASM 插件运行时
 | ~~中~~ | ~~缺失功能~~ | `commands/plugin.rs` | ~~插件管理全部 5 个命令为 stub~~ | ✅ 已修复 |
 | ~~中~~ | ~~缺失功能~~ | `ed2k/mod.rs` | ~~`Ed2kEngine::download` 仅 sleep 100ms~~ | ✅ 已修复 |
 | ~~中~~ | ~~缺失功能~~ | `archive/mod.rs` | ~~TAR.XZ, RAR, 7Z 格式解压返回 "not implemented"~~ | ✅ 已修复 |
-| 低 | 缺失资源 | `extension/` | 浏览器扩展图标文件缺失（icons/icon16.png 等） | ⏳ 待补充 |
-| ~~低~~ | ~~缺失构建~~ | `src-webui/` | ~~WebUI 无独立构建管线（无 Tailwind 配置、无 index.html 入口）~~ | ✅ 已修复 |
+| ~~中~~ | ~~缺失功能~~ | `ed2k/kad.rs` | ~~KAD 引导/迭代查找/搜索全部为 TODO stub~~ | ✅ 已修复 |
+| ~~中~~ | ~~缺失功能~~ | `plugin/loader.rs` | ~~WASM 运行时未集成（wasmtime）~~ | ✅ 已修复 |
+| ~~中~~ | ~~缺失功能~~ | `ed2k/hash.rs` | ~~AICH hash 为 TODO stub~~ | ✅ 已修复 |
+| ~~低~~ | ~~缺失资源~~ | `extension/` | ~~浏览器扩展图标文件缺失~~ | ✅ 已修复 |
+| ~~低~~ | ~~缺失构建~~ | `src-webui/` | ~~WebUI 无独立构建管线~~ | ✅ 已修复 |
 
 *— End of Implementation Plan —*
