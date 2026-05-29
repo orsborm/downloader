@@ -1471,6 +1471,8 @@ wasmtime = "22"                 # WASM 插件运行时
 | 2026-05-29 | Bug | `engine/ed2k/hash.rs` | `Md4Hasher::process_block` 为空实现，ed2k hash 计算返回全零 | 引入 `md4` crate，用真实 MD4 替代手写空实现，新增已知向量测试 | ✅ 已修复 |
 | 2026-05-29 | Bug | `api/mod.rs` | `start_http` 为 TODO stub，浏览器扩展和 WebUI 无法连接 | 使用 axum 实现 POST /jsonrpc 和 GET /health 端点，含 CORS 支持 | ✅ 已修复 |
 | 2026-05-29 | 依赖 | `Cargo.toml` | 缺少 `md4`, `axum`, `tokio-tungstenite`, `tower-http` | 添加依赖用于 ed2k hash 和 JSON-RPC HTTP 服务 | ✅ 已修复 |
+| 2026-05-29 | 功能 | `api/rpc.rs` | 所有 RPC handler 返回硬编码 stub 数据 | 接入 AppState，handler 调用 TaskManager 和 Database 实现真实 CRUD | ✅ 已修复 |
+| 2026-05-29 | 功能 | `archive/mod.rs` | TAR.BZ2 格式返回 "not implemented" | 添加 bzip2 crate，实现 extract_tar_bz2 方法 | ✅ 已修复 |
 
 ### 待修复的已知问题
 
