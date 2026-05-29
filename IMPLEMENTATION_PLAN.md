@@ -82,6 +82,44 @@
 
 ---
 
+### 迭代 13：UI 状态一致性与测试增强
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| 修复 seeding 状态 UI 一致性 | ✅ 已完成 | 上下文菜单、工具栏、任务列表速度/ETA 显示、详情面板日志、空格键快捷键均正确处理 seeding 状态 |
+| 修复速度历史全局追踪 | ✅ 已完成 | `taskStore.applyUpdate` 现在记录所有活跃任务的速度总和而非单个事件的速度 |
+| 修复 formatEta 小数秒显示 | ✅ 已完成 | 使用 `Math.floor` 避免显示 `1m30.7s` 这样的小数秒 |
+| 增强测试覆盖 | ✅ 已完成 | 新增 formatEta 小数/大值测试、speedHistory 全局追踪和节流测试（49 测试全通过） |
+
+**变更文件**：`App.tsx`, `TaskList.tsx`, `Toolbar.tsx`, `TaskDetail.tsx`, `format.ts`, `taskStore.ts`, `format.test.ts`, `taskStore.test.ts`
+
+---
+
+### 迭代 14：拖拽种子文件与错误重试
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| 拖拽 .torrent 文件支持 | ✅ 已完成 | 使用 Tauri 原生 `onDragDropEvent` API，支持拖入 .torrent 文件自动添加任务，带视觉拖拽指示器 |
+| 错误任务重试按钮 | ✅ 已完成 | 上下文菜单新增"重试"选项（RefreshCw 图标），对 error 状态任务调用 resumeTask |
+| 速度图表优化 | ✅ 已完成 | SpeedChart 已正确显示下载/上传双线，speedHistory 已在迭代 13 中修复为全局追踪 |
+
+**变更文件**：`App.tsx`, `TaskList.tsx`
+
+---
+
+### 迭代 15：键盘快捷键、批量复制与链接验证
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| Ctrl+N 快捷键 | ✅ 已完成 | 全局 Ctrl+N 打开添加任务对话框 |
+| 批量复制链接 | ✅ 已完成 | 右键菜单"复制链接"支持多选任务，换行分隔复制所有选中任务的 URL |
+| URL 验证 | ✅ 已完成 | `isValidDownloadUrl()` 验证 HTTP/HTTPS/FTP/magnet/ed2k/HLS/DASH/torrent 链接格式 |
+| 测试增强 | ✅ 已完成 | 新增 12 个测试（URL 验证 + 格式化边缘情况），总计 61 测试全通过 |
+
+**变更文件**：`App.tsx`, `TaskList.tsx`, `AddTaskDialog.tsx`, `format.ts`, `format.test.ts`
+
+---
+
 ## 阶段总览
 
 ```
