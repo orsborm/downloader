@@ -1574,6 +1574,20 @@ wasmtime = "22"                 # WASM 插件运行时
 
 ---
 
+### 迭代 22：代码审查修复与质量改进
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| Toast ID 碰撞修复 | ✅ 已完成 | `Date.now()+counter` → `crypto.randomUUID()`，消除并发碰撞风险 |
+| 动态导入修复 | ✅ 已完成 | `TaskList.tsx` 中 `handlePriority` 改为静态导入 `getAllTasks` |
+| formatEta 负数处理 | ✅ 已完成 | 负值返回 `"--"` 而非 `"∞"`，区分"未知"和"计算错误" |
+| 剪贴板冷却机制 | ✅ 已完成 | 新增 10 秒冷却时间，避免复制普通 URL 重复触发弹窗 |
+| Toast HMR 泄漏修复 | ✅ 已完成 | `toastListeners` 改为 globalThis 持久化 + splice 原地移除 |
+| stateOrder 常量提取 | ✅ 已完成 | 从内联对象提取为 `STATE_ORDER` 模块级常量 |
+| 测试同步更新 | ✅ 已完成 | Toast UUID 格式测试 + formatEta 负值测试更新，338 测试全通过 |
+
+**变更文件**：`Toast.tsx`, `TaskList.tsx`, `format.ts`, `useClipboard.ts`, `taskStore.ts`, `components.test.ts`, `format.test.ts`, `REVIEW.md`, `TEST_REPORT.md`
+
 ---
 
 ## Bug 修复与质量改进追踪
