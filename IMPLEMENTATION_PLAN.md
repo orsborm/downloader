@@ -1468,6 +1468,9 @@ wasmtime = "22"                 # WASM 插件运行时
 | 2026-05-29 | Bug | `main.rs` | `AppState` 缺少 `config_path` 字段，settings 命令无法获取正确配置路径 | 新增 `config_path: PathBuf` 字段，在 `setup` 中初始化 | ✅ 已修复 |
 | 2026-05-29 | 清理 | `package.json` | `@dnd-kit/*`, `@tanstack/react-table`, `framer-motion`, `date-fns` 从未被导入 | 从 dependencies 中移除 | ✅ 已修复 |
 | 2026-05-29 | 测试 | `__tests__/taskStore.test.ts` | taskStore（核心状态管理）无任何测试 | 新增 17 个测试用例，覆盖 setTasks/applyUpdate/selectTask/removeTask/sort/stats | ✅ 已完成 |
+| 2026-05-29 | Bug | `engine/ed2k/hash.rs` | `Md4Hasher::process_block` 为空实现，ed2k hash 计算返回全零 | 引入 `md4` crate，用真实 MD4 替代手写空实现，新增已知向量测试 | ✅ 已修复 |
+| 2026-05-29 | Bug | `api/mod.rs` | `start_http` 为 TODO stub，浏览器扩展和 WebUI 无法连接 | 使用 axum 实现 POST /jsonrpc 和 GET /health 端点，含 CORS 支持 | ✅ 已修复 |
+| 2026-05-29 | 依赖 | `Cargo.toml` | 缺少 `md4`, `axum`, `tokio-tungstenite`, `tower-http` | 添加依赖用于 ed2k hash 和 JSON-RPC HTTP 服务 | ✅ 已修复 |
 
 ### 待修复的已知问题
 
