@@ -1550,8 +1550,8 @@ wasmtime = "22"                 # WASM 插件运行时
 | ~~高~~ | ~~缺失功能~~ | `api/mod.rs` | ~~JSON-RPC HTTP 服务未启动~~ | ✅ 已修复 |
 | ~~中~~ | ~~缺失功能~~ | `commands/plugin.rs` | ~~插件管理全部 5 个命令为 stub~~ | ✅ 已修复 |
 | ~~中~~ | ~~缺失功能~~ | `ed2k/mod.rs` | ~~`Ed2kEngine::download` 仅 sleep 100ms~~ | ✅ 已修复 |
-| 中 | 缺失功能 | `archive/mod.rs` | TAR.XZ, RAR, 7Z 格式解压返回 "not implemented" | ⏳ 待实现 |
+| ~~中~~ | ~~缺失功能~~ | `archive/mod.rs` | ~~TAR.XZ, RAR, 7Z 格式解压返回 "not implemented"~~ | ✅ 已修复 |
 | 低 | 缺失资源 | `extension/` | 浏览器扩展图标文件缺失（icons/icon16.png 等） | ⏳ 待补充 |
-| 低 | 缺失构建 | `src-webui/` | WebUI 无独立构建管线（无 Tailwind 配置、无 index.html 入口） | ⏳ 待搭建 |
+| ~~低~~ | ~~缺失构建~~ | `src-webui/` | ~~WebUI 无独立构建管线（无 Tailwind 配置、无 index.html 入口）~~ | ✅ 已修复 |
 
 *— End of Implementation Plan —*
