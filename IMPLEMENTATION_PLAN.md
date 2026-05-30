@@ -1590,6 +1590,22 @@ wasmtime = "22"                 # WASM 插件运行时
 
 ---
 
+### 迭代 26：统一错误处理模块
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| 创建统一错误处理模块 | ✅ 已完成 | `lib/errors.ts`：DownloaderError 类、ErrorCode 枚举（20+ 错误码）、handleError/withErrorHandling/withSyncErrorHandling 函数 |
+| 错误码自动推断 | ✅ 已完成 | 从错误消息自动推断错误码（network→NETWORK_ERROR、timeout→TIMEOUT、ENOSPC→DISK_FULL 等） |
+| 用户友好消息 | ✅ 已完成 | 每个错误码映射到中文用户友好消息 |
+| 组件错误处理统一 | ✅ 已完成 | 更新 App.tsx、TaskList.tsx、PluginManager.tsx、RssManager.tsx、SettingsDialog.tsx 使用统一错误处理 |
+| 错误处理测试 | ✅ 已完成 | 新增 30 个测试：DownloaderError 构造/from/toUserMessage、错误码推断、handleError/withErrorHandling/withSyncErrorHandling |
+
+**变更文件**：`lib/errors.ts`（新增）, `App.tsx`, `components/TaskList.tsx`, `components/PluginManager.tsx`, `components/RssManager.tsx`, `components/SettingsDialog.tsx`, `__tests__/errors.test.ts`（新增）
+
+**测试统计**：385 测试全通过（原 355 → 新增 30）
+
+---
+
 ## Bug 修复与质量改进追踪
 
 | 日期 | 类型 | 文件 | 问题描述 | 修复方案 | 状态 |
