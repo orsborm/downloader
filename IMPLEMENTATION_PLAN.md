@@ -1630,6 +1630,16 @@ wasmtime = "22"                 # WASM 插件运行时
 
 ---
 
+### 迭代 30：RPC 一致性修复
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| purgeCompleted 一致性 | ✅ 已完成 | `rpc.rs` `purgeCompleted` 现在同时清除 Done 和 Error 状态的任务，与 IPC 命令行为一致 |
+
+**变更文件**：`src-tauri/src/api/rpc.rs`
+
+---
+
 ### 迭代 26：统一错误处理模块
 
 | 任务 | 状态 | 说明 |
