@@ -19,6 +19,21 @@
 
 ---
 
+## 迭代 25：库依赖升级与代码质量改进
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| RSS 过滤规则：自研 regex → regex crate | ✅ 已完成 | 移除 200+ 行自研 `regex_lite` 模块，替换为 `regex` crate，支持完整正则语法 |
+| DASH MPD 解析：字符串解析 → quick-xml | ✅ 已完成 | 重写 `parse_mpd` 使用 `quick-xml` 流式解析器，正确处理 SegmentTemplate/SegmentTimeline/Representation |
+| RSS/Atom 解析：字符串解析 → quick-xml | ✅ 已完成 | 重写 `parse_rss_items`/`parse_atom_items`/`parse_opml` 使用 `quick-xml` |
+| 测试新增 | ✅ 已完成 | 新增 18 个 Rust 单元测试（MPD 解析 6 + regex 6 + RSS/Atom 6） |
+
+**新增依赖**：`regex = "1"`, `quick-xml = "0.36"`
+
+**变更文件**：`Cargo.toml`, `rss/rules.rs`, `rss/feed.rs`, `engine/hls/m3u8.rs`, `IMPLEMENTATION_PLAN.md`, `TEST_REPORT.md`
+
+---
+
 ## 迭代 24：安全修复与质量改进
 
 | 任务 | 状态 | 说明 |
