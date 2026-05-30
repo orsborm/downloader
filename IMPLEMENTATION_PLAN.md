@@ -1605,6 +1605,20 @@ wasmtime = "22"                 # WASM 插件运行时
 
 ---
 
+### 迭代 28：UX 改进与 WebUI 增强
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| 通知显示任务名 | ✅ 已完成 | `useTaskEvents.ts` 完成/失败通知显示任务名称而非 UUID |
+| 剪贴板启动误触发 | ✅ 已完成 | `useClipboard.ts` 首次轮询读取当前剪贴板作为基线，避免启动时弹出添加对话框 |
+| WebUI WebSocket 重连 | ✅ 已完成 | `rpc-api.ts` WebSocket 断线自动重连，指数退避（1s→30s） |
+| RPC ID 碰撞修复 | ✅ 已完成 | `rpc-api.ts` 使用递增计数器替代 `Date.now()` 避免同毫秒请求 ID 碰撞 |
+| WebUI 错误提示 | ✅ 已完成 | `App.tsx` 用状态驱动的错误横幅替代 `alert()` |
+
+**变更文件**：`src/hooks/useTaskEvents.ts`, `src/hooks/useClipboard.ts`, `src-webui/lib/rpc-api.ts`, `src-webui/App.tsx`
+
+---
+
 ### 迭代 26：统一错误处理模块
 
 | 任务 | 状态 | 说明 |
