@@ -1590,6 +1590,21 @@ wasmtime = "22"                 # WASM 插件运行时
 
 ---
 
+### 迭代 27：安全审计与质量改进
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| 安全审计验证 | ✅ 已完成 | 验证所有 CRITICAL/HIGH 安全问题已修复：Zip Slip 路径遍历（validate_safe_path）、JSON-RPC API 认证（token 验证）、RSS 轮询间隔（per-feed last_poll）、OPML XML 注入（escape_xml）、信号量 panic（优雅错误处理） |
+| parseInt NaN 校验 | ✅ 已完成 | `AddTaskDialog.tsx` 中 `parseInt(speedLimit)` 添加 `|| 0` 兜底，防止 NaN 传播 |
+| 任务列表 memoization | ✅ 已完成 | `TaskList.tsx` 中 `getSortedTasks()` 使用 `useMemo` 包裹，避免每次渲染重新排序 |
+| 测试验证 | ✅ 已完成 | 573 测试全通过（原 510 → 新增 63，含 i18n/shared-types/schedule/useClipboard/useTaskEvents/webui 等模块） |
+
+**变更文件**：`src/components/AddTaskDialog.tsx`, `src/components/TaskList.tsx`, `TEST_REPORT.md`
+
+**测试统计**：573 测试全通过
+
+---
+
 ### 迭代 26：统一错误处理模块
 
 | 任务 | 状态 | 说明 |
