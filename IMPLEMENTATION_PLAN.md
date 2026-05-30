@@ -1619,6 +1619,17 @@ wasmtime = "22"                 # WASM 插件运行时
 
 ---
 
+### 迭代 29：代理安全与配置改进
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| 代理密码 URL 泄露修复 | ✅ 已完成 | `config.rs` `proxy_url()` 不再嵌入凭据到 URL，新增 `proxy_credentials()` 方法 |
+| HTTP 客户端代理认证 | ✅ 已完成 | `http.rs` `build_client()` 使用 `Proxy::basic_auth` 传递凭据，避免密码出现在 URL 中 |
+
+**变更文件**：`src-tauri/src/storage/config.rs`, `src-tauri/src/engine/http.rs`
+
+---
+
 ### 迭代 26：统一错误处理模块
 
 | 任务 | 状态 | 说明 |
