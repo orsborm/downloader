@@ -42,8 +42,11 @@
 
 ## 测试补全
 
+- [x] **Rust API 模块测试**：`api/mod.rs` CORS 白名单、JSON-RPC 响应格式、事件序列化
+- [x] **Rust 插件加载器测试**：`plugin/loader.rs` 路径遍历防护、WASM 魔数验证、内存限制
+- [x] **Rust 存储层基础测试**：`storage/db.rs` TaskState/Protocol 枚举 roundtrip、数据库创建
+- [x] **前端 XSS 防护测试**：`speedchart.test.ts` DOM API 安全验证、computeYTicks 输出安全
 - [ ] **Rust 核心模块测试**：`engine/task_manager.rs` 状态机、并发控制
-- [ ] **Rust 存储层测试**：`storage/db.rs` CRUD、迁移、崩溃恢复
 - [ ] **Rust 命令层测试**：`commands/task.rs` Tauri IPC 端到端
 - [ ] **Rust HTTP 引擎测试**：`engine/http.rs` 下载、断点续传、代理
 - [ ] **Rust 解压测试**：`archive/mod.rs` 各格式解压 + 路径安全
