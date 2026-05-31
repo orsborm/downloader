@@ -6,11 +6,11 @@
 
 ## 高优先级 — 安全修复
 
-- [ ] **WASM 沙箱路径遍历修复**：`plugin/loader.rs` 使用 `canonicalize()` 验证路径在允许目录内，拒绝绝对路径
-- [ ] **WASM 宿主函数死锁修复**：`plugin/loader.rs` 将宿主函数改为异步或使用 `spawn_blocking`
-- [ ] **7z 解压路径遍历修复**：`archive/mod.rs` 对 7z 条目执行 `validate_safe_path`
-- [ ] **ed2k 无限递归修复**：`engine/ed2k/mod.rs` 改为循环处理 `OP_QUEUERANK`
-- [ ] **API 认证默认启用**：`api/mod.rs` + `config.rs` 首次启动自动生成 token，空 token 拒绝请求
+- [x] **WASM 沙箱路径遍历修复**：`plugin/loader.rs` 使用 `canonicalize()` 验证路径在允许目录内，拒绝绝对路径
+- [x] **WASM 宿主函数死锁修复**：`plugin/loader.rs` 将 `block_on` 改为 `block_in_place` 避免 tokio 死锁
+- [x] **7z 解压路径遍历修复**：`archive/mod.rs` 对 7z 条目执行 `validate_safe_path`，移除逃逸文件
+- [x] **ed2k 无限递归修复**：`engine/ed2k/mod.rs` 改为循环处理 `OP_QUEUERANK`，最多重试 60 次
+- [x] **API 认证默认启用**：`storage/config.rs` + `api/mod.rs` 首次启动自动生成 token，空 token 拒绝请求
 - [ ] **API CORS 收紧**：`api/mod.rs` 将 `CorsLayer::permissive()` 替换为 localhost 白名单
 - [ ] **SpeedChart XSS 修复**：`SpeedChart.tsx` 改用 DOM API 替代 `innerHTML`
 
