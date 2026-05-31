@@ -11,14 +11,14 @@
 - [x] **7z 解压路径遍历修复**：`archive/mod.rs` 对 7z 条目执行 `validate_safe_path`，移除逃逸文件
 - [x] **ed2k 无限递归修复**：`engine/ed2k/mod.rs` 改为循环处理 `OP_QUEUERANK`，最多重试 60 次
 - [x] **API 认证默认启用**：`storage/config.rs` + `api/mod.rs` 首次启动自动生成 token，空 token 拒绝请求
-- [ ] **API CORS 收紧**：`api/mod.rs` 将 `CorsLayer::permissive()` 替换为 localhost 白名单
-- [ ] **SpeedChart XSS 修复**：`SpeedChart.tsx` 改用 DOM API 替代 `innerHTML`
+- [x] **API CORS 收紧**：`api/mod.rs` 将 `CorsLayer::permissive()` 替换为 localhost 白名单
+- [x] **SpeedChart XSS 修复**：`SpeedChart.tsx` 改用 DOM API 替代 `innerHTML`
 
 ## 中优先级 — 稳定性与质量
 
-- [ ] **DB 初始化 panic 修复**：`main.rs:64` 改为 `?` 传播 + 用户错误提示
-- [ ] **数据库错误日志**：`main.rs:188-200` 恢复 `let _ =` 为日志记录
-- [ ] **WASM http_get 修复**：`plugin/loader.rs` 将响应体写回 WASM 线性内存
+- [x] **DB 初始化 panic 修复**：`main.rs:64` 改为 `?` 传播 + 用户错误提示
+- [x] **数据库错误日志**：`main.rs:188-200` 恢复 `let _ =` 为日志记录
+- [x] **WASM http_get 修复**：`plugin/loader.rs` 将响应体写回 WASM 线性内存
 - [ ] **前端 Error Boundary**：`App.tsx` 添加 React Error Boundary 包裹主内容
 - [ ] **StatusBar 性能优化**：`StatusBar.tsx` 使用 `useMemo` 或 Zustand selector
 - [ ] **Toolbar 性能优化**：`Toolbar.tsx` 缓存 `Array.from(tasks.values())`
