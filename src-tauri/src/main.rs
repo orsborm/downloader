@@ -158,6 +158,11 @@ fn main() {
             // 传递 ed2k 自定义服务器列表
             task_manager.set_ed2k_servers(config.connection.ed2k_servers.clone());
 
+            // 启动 KAD 网络（使用 ed2k 服务器作为引导节点）
+            tauri::async_runtime::block_on(async {
+                task_manager.start_kad().await;
+            });
+
             // 初始化 BT 引擎
             let default_dir = config.download.default_dir.clone();
             tauri::async_runtime::block_on(async {
@@ -572,6 +577,22 @@ fn main() {
                             mgr.set_global_download_speed_limit(dl_speed);
                             mgr.set_global_upload_speed_limit(ul_speed);
                         }
+                    }
+                });
+            }
+
+            // KAD 定期维护：每 5 分钟清理过期节点、刷新路由表
+            {
+                let tm = state_ref.task_manager.clone();
+                tauri::async_runtime::spawn(async move {
+                    // 等待 KAD 引导完成
+                    tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+                    loop {
+                        {
+                            let mut mgr = tm.lock().await;
+                            mgr.maintain_kad().await;
+                        }
+                        tokio::time::sleep(std::time::Duration::from_secs(300)).await;
                     }
                 });
             }

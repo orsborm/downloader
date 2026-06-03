@@ -4,6 +4,7 @@
 
 use std::collections::HashSet;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tokio::net::UdpSocket;
 use tracing::{debug, info, warn};
 
@@ -200,6 +201,10 @@ pub struct KadEngine {
     local_id: KadId,
     /// 是否已启动
     running: bool,
+    /// 持久 UDP 套接字（启动后绑定，所有 KAD 通信共用）
+    socket: Option<Arc<UdpSocket>>,
+    /// 监听端口（启动时绑定）
+    listen_port: u16,
 }
 
 impl Clone for KadEngine {
@@ -208,60 +213,85 @@ impl Clone for KadEngine {
             routing_table: self.routing_table.clone(),
             local_id: self.local_id,
             running: self.running,
+            socket: None, // 克隆时不复制 socket
+            listen_port: self.listen_port,
         }
     }
 }
 
 impl KadEngine {
     /// 创建新的 KAD 引擎
-    pub fn new(local_id: KadId) -> Self {
-        info!("KAD 引擎初始化: 节点 ID = {:02x?}", local_id.0);
+    pub fn new(local_id: KadId, listen_port: u16) -> Self {
+        info!("KAD 引擎初始化: 节点 ID = {:02x?}, 端口 = {}", local_id.0, listen_port);
         KadEngine {
             routing_table: KadRoutingTable::new(local_id),
             local_id,
             running: false,
+            socket: None,
+            listen_port,
         }
     }
 
-    /// 启动 KAD 网络
-    pub async fn start(&mut self, bootstrap_addr: SocketAddr) -> Result<(), anyhow::Error> {
-        info!("启动 KAD 网络，引导节点: {}", bootstrap_addr);
+    /// 启动 KAD 网络：绑定 UDP 端口 + 引导
+    pub async fn start(&mut self, bootstrap_addrs: &[SocketAddr]) -> Result<(), anyhow::Error> {
+        if bootstrap_addrs.is_empty() {
+            anyhow::bail!("无可用引导节点");
+        }
+
+        // 绑定持久 UDP 套接字
+        let addr = format!("0.0.0.0:{}", self.listen_port);
+        let socket = Arc::new(UdpSocket::bind(&addr).await?);
+        info!("KAD UDP 套接字绑定: {}", addr);
+        self.socket = Some(socket.clone());
         self.running = true;
 
-        let socket = UdpSocket::bind("0.0.0.0:0").await?;
-
-        // 构建 KADEMLIA2_BOOTSTRAP_REQ 包
-        // 协议标识 0xE4 + 包长 + 操作码 0x01 + 16字节节点ID
-        let mut packet = Vec::with_capacity(22);
-        packet.push(0xE4u8); // KAD 协议标识
-        let payload_len: u32 = 17; // 1 (opcode) + 16 (node id)
-        packet.extend_from_slice(&payload_len.to_le_bytes());
-        packet.push(KadOperation::BootstrapReq as u8);
-        packet.extend_from_slice(&self.local_id.0);
-
-        socket.send_to(&packet, bootstrap_addr).await?;
-        debug!("已发送 KAD 引导请求到 {}", bootstrap_addr);
-
-        // 接收响应
-        let mut buf = [0u8; 1024];
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(5),
-            socket.recv_from(&mut buf),
-        )
-        .await
-        {
-            Ok(Ok((len, from))) => {
-                debug!("收到 KAD 引导响应: {} 字节, 来自 {}", len, from);
-                self.parse_bootstrap_response(&buf[..len]);
-            }
-            Ok(Err(e)) => {
-                warn!("KAD 引导接收失败: {}", e);
-            }
-            Err(_) => {
-                warn!("KAD 引导请求超时");
+        // 向所有引导节点发送请求
+        for bootstrap_addr in bootstrap_addrs {
+            if let Err(e) = self.send_bootstrap_req(&socket, *bootstrap_addr).await {
+                debug!("KAD 引导请求失败 {}: {}", bootstrap_addr, e);
             }
         }
 
+        // 等待响应（最多 5 秒）
+        let mut buf = [0u8; 2048];
+        let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(5);
+        while tokio::time::Instant::now() < deadline {
+            match tokio::time::timeout(
+                std::time::Duration::from_millis(500),
+                socket.recv_from(&mut buf),
+            )
+            .await
+            {
+                Ok(Ok((len, from))) => {
+                    debug!("收到 KAD 响应: {} 字节, 来自 {}", len, from);
+                    self.parse_bootstrap_response(&buf[..len]);
+                    // 收到第一个响应后继续收集更多节点
+                }
+                _ => continue,
+            }
+        }
+
+        let total = self.routing_table.total_nodes();
+        if total > 0 {
+            info!("KAD 引导完成，路由表中共 {} 个节点", total);
+        } else {
+            warn!("KAD 引导未收到响应，路由表为空");
+        }
+
+        Ok(())
+    }
+
+    /// 发送引导请求
+    async fn send_bootstrap_req(&self, socket: &UdpSocket, addr: SocketAddr) -> Result<(), anyhow::Error> {
+        // KADEMLIA2_BOOTSTRAP_REQ: [0xE4][4B len][0x01][16B node_id]
+        let mut packet = Vec::with_capacity(22);
+        packet.push(0xE4u8);
+        let payload_len: u32 = 17;
+        packet.extend_from_slice(&payload_len.to_le_bytes());
+        packet.push(KadOperation::BootstrapReq as u8);
+        packet.extend_from_slice(&self.local_id.0);
+        socket.send_to(&packet, addr).await?;
+        debug!("KAD 引导请求已发送到 {}", addr);
         Ok(())
     }
 
@@ -385,14 +415,17 @@ impl KadEngine {
 
     /// 向单个节点发送 FIND_NODE 请求并解析响应
     async fn send_find_node_req(&self, node: &KadNode, target: &KadId) -> Result<Vec<KadNode>, anyhow::Error> {
-        let socket = UdpSocket::bind("0.0.0.0:0").await?;
+        let socket = match &self.socket {
+            Some(s) => s.clone(),
+            None => anyhow::bail!("KAD 未启动"),
+        };
 
-        // KADEMLIA2_REQ (0x02): [1字节操作码] [16字节目标ID] [16字节请求者ID]
+        // KADEMLIA2_REQ (0x02): [0xE4][4B len][0x02][16B target_id][16B sender_id]
         let mut packet = Vec::with_capacity(38);
         packet.push(0xE4u8);
         let payload_len: u32 = 33;
         packet.extend_from_slice(&payload_len.to_le_bytes());
-        packet.push(0x02u8); // KADEMLIA2_REQ
+        packet.push(0x02u8);
         packet.extend_from_slice(&target.0);
         packet.extend_from_slice(&self.local_id.0);
 
@@ -519,7 +552,10 @@ impl KadEngine {
 
     /// 发送关键词搜索请求
     async fn send_search_key_req(&self, node: &KadNode, keyword: &str) -> Result<Vec<String>, anyhow::Error> {
-        let socket = UdpSocket::bind("0.0.0.0:0").await?;
+        let socket = match &self.socket {
+            Some(s) => s.clone(),
+            None => anyhow::bail!("KAD 未启动"),
+        };
 
         let keyword_bytes = keyword.as_bytes();
         let mut packet = Vec::with_capacity(40 + keyword_bytes.len());
@@ -550,7 +586,10 @@ impl KadEngine {
 
     /// 发送源搜索请求
     async fn send_search_source_req(&self, node: &KadNode, file_hash: &[u8; 16]) -> Result<Vec<SocketAddr>, anyhow::Error> {
-        let socket = UdpSocket::bind("0.0.0.0:0").await?;
+        let socket = match &self.socket {
+            Some(s) => s.clone(),
+            None => anyhow::bail!("KAD 未启动"),
+        };
 
         let mut packet = Vec::with_capacity(40);
         packet.push(0xE4u8);
@@ -656,6 +695,33 @@ impl KadEngine {
         sources
     }
 
+    /// 定期维护：清理过期节点 + 刷新最旧的 bucket
+    pub async fn maintain(&mut self) {
+        if !self.running {
+            return;
+        }
+
+        // 清理过期节点
+        self.routing_table.cleanup();
+
+        // 刷新最旧的 bucket（查找随机 ID 以保持 bucket 活跃）
+        if let Some(socket) = &self.socket {
+            // 生成随机目标 ID 进行查找，刷新路由表
+            let mut rand_id = [0u8; 16];
+            for b in &mut rand_id {
+                *b = rand_byte();
+            }
+            let target = KadId::from_bytes(rand_id);
+            let closest = self.routing_table.find_closest(&target, ALPHA_SEARCH);
+            for node in closest {
+                let _ = self.send_find_node_req(&node, &target).await;
+            }
+        }
+
+        let total = self.routing_table.total_nodes();
+        debug!("KAD 维护完成，路由表: {} 个节点", total);
+    }
+
     /// 获取路由表状态
     pub fn status(&self) -> (bool, usize) {
         (self.running, self.routing_table.total_nodes())
@@ -664,6 +730,17 @@ impl KadEngine {
     /// 停止 KAD 网络
     pub fn stop(&mut self) {
         self.running = false;
+        self.socket = None;
         info!("KAD 网络已停止");
     }
+}
+
+/// 辅助函数：生成随机字节
+fn rand_byte() -> u8 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .subsec_nanos();
+    (nanos & 0xFF) as u8
 }

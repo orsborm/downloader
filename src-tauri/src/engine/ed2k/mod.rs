@@ -158,11 +158,61 @@ impl Ed2kEngine {
             for b in &mut id_bytes {
                 *b = rand_byte();
             }
-            Some(kad::KadEngine::new(kad::KadId(id_bytes)))
+            // KAD 使用 ed2k UDP 端口（默认 4661）
+            Some(kad::KadEngine::new(kad::KadId(id_bytes), config.port))
         } else {
             None
         };
         Ed2kEngine { config, kad_engine }
+    }
+
+    /// 启动 KAD 网络（使用 ed2k 服务器作为引导节点）
+    pub async fn start_kad(&mut self) -> Result<()> {
+        let kad = match &mut self.kad_engine {
+            Some(k) => k,
+            None => return Ok(()),
+        };
+
+        // 收集引导节点地址（所有已知 ed2k 服务器的 UDP 端口）
+        let mut bootstrap_addrs: Vec<SocketAddr> = Vec::new();
+        for (host, port) in DEFAULT_SERVERS {
+            if let Ok(ip) = host.parse::<std::net::Ipv4Addr>() {
+                bootstrap_addrs.push(SocketAddr::new(std::net::IpAddr::V4(ip), *port));
+            }
+        }
+        // 添加用户自定义服务器
+        for server_str in &self.config.custom_servers {
+            if let Some((ip_str, port_str)) = server_str.rsplit_once(':') {
+                if let (Ok(ip), Ok(port)) = (ip_str.parse::<std::net::Ipv4Addr>(), port_str.parse::<u16>()) {
+                    bootstrap_addrs.push(SocketAddr::new(std::net::IpAddr::V4(ip), port));
+                }
+            }
+        }
+
+        if bootstrap_addrs.is_empty() {
+            warn!("无可用 KAD 引导节点");
+            return Ok(());
+        }
+
+        info!("KAD 引导: {} 个候选节点", bootstrap_addrs.len());
+        match kad.start(&bootstrap_addrs).await {
+            Ok(()) => {
+                let (running, nodes) = kad.status();
+                info!("KAD 启动: running={}, 路由表节点数={}", running, nodes);
+            }
+            Err(e) => {
+                warn!("KAD 启动失败: {}", e);
+            }
+        }
+
+        Ok(())
+    }
+
+    /// KAD 定期维护（清理过期节点、刷新路由表）
+    pub async fn maintain_kad(&mut self) {
+        if let Some(ref mut kad) = self.kad_engine {
+            kad.maintain().await;
+        }
     }
 
     /// 更新自定义服务器列表

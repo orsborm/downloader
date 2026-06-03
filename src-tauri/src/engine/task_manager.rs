@@ -727,6 +727,18 @@ impl TaskManager {
         }
     }
 
+    /// 启动 KAD 网络（使用 ed2k 服务器列表作为引导节点）
+    pub async fn start_kad(&mut self) {
+        if let Err(e) = self.ed2k_engine.start_kad().await {
+            tracing::warn!("KAD 启动失败: {}", e);
+        }
+    }
+
+    /// KAD 定期维护（清理过期节点、刷新路由表）
+    pub async fn maintain_kad(&mut self) {
+        self.ed2k_engine.maintain_kad().await;
+    }
+
     /// 更新 BT 做种配置
     pub fn set_bt_seeding_config(&mut self, seed_ratio: f64, seed_time: u64, stop_seeding: bool) {
         self.bt_engine.set_seeding_config(seed_ratio, seed_time, stop_seeding);
