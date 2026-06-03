@@ -1,35 +1,35 @@
-# TODO — 迭代 35 计划
+# TODO — 迭代 36 计划
 
-> 基于迭代 35 代码审查（REVIEW.md），按优先级排列
-> 安全修复（C1-C3, H1, M1-M3）已全部完成
+> 基于迭代 35 全面代码审查（REVIEW.md），按优先级排列
+> 安全加固 9 项已全部完成
 
 ---
 
-## 高优先级 — 稳定性
+## 高优先级 — 安全与稳定性
 
-- [ ] **前端 Error Boundary**：`App.tsx` 添加 React Error Boundary 包裹主内容，防止白屏
-- [ ] **Config 敏感信息加密**：`config.rs` api_token/proxy_password 至少 base64 编码存储
-- [ ] **DB Mutex 优化**：`storage/db.rs` 将 `tokio::sync::Mutex` 改为 `std::sync::Mutex`（rusqlite 是同步的）
+- [ ] **Shell 命令注入加固**：`main.rs:73-92` 改用白名单方式过滤命令字符，补充 `!~#\n\r'[]` 等缺失字符
+- [ ] **HTTP 客户端 expect→Result**：`plugin/loader.rs:121`、`engine/http.rs:111`、`engine/hls/mod.rs:117` 将 `.expect()` 改为 `?` 或 `.unwrap_or_default()`
+- [ ] **DB JSON unwrap 修复**：`storage/db.rs:806` 将链式 `.unwrap()` 改为 `if let Some(...)` 或 `?`
+- [ ] **前端 Error Boundary**：`App.tsx` 在 TaskList+TaskDetail 区域、SpeedChart、lazy Dialog 外层各加 ErrorBoundary
 
-## 中优先级 — 性能与体验
+## 中优先级 — 性能与质量
 
-- [ ] **StatusBar 性能优化**：`StatusBar.tsx` 使用 `useMemo` 或 Zustand selector 避免全量遍历
-- [ ] **Toolbar 性能优化**：`Toolbar.tsx` 缓存 `Array.from(tasks.values())`
-- [ ] **键盘快捷键错误反馈**：`App.tsx` catch 中调用 `handleError` 替代静默吞没
+- [ ] **App.tsx re-render 优化**：移除 App 组件对 `s.tasks` 的订阅，改为子组件内细粒度 selector
+- [ ] **任务参数持久化日志**：`commands/task.rs:76` 将 `let _ =` 改为 `if let Err(e) = ... { warn!(...) }`
+- [ ] **StatusBar BT 轮询优化**：`StatusBar.tsx` 仅在 BT 引擎激活时启动 `getBtStatus()` 轮询
+- [ ] **DB Mutex 类型优化**：`storage/db.rs` 将 `tokio::sync::Mutex` 改为 `std::sync::Mutex`
 - [ ] **resume_all_tasks 锁优化**：`commands/task.rs` 批量获取待恢复任务减少锁竞争
-- [ ] **TaskList useMemo 依赖修复**：`TaskList.tsx:89` 将 searchQuery/statusFilter 加入依赖
-- [ ] **SpeedChart rAF 优化**：无下载数据时停止 requestAnimationFrame 循环
+- [ ] **Dead code 清理**：删除未使用的 `Dialog.tsx`、连接或删除 `PasswordManager`、实现或删除 `HostApi` trait
+- [ ] **TaskList useMemo 依赖修复**：`TaskList.tsx:109` 优化依赖，避免每次 Map 引用变化都重算
 
-## 低优先级 — 代码质量
+## 低优先级 — 可访问性与代码整洁
 
-- [ ] **Toolbar i18n 修复**：`Toolbar.tsx:241` 将 `t("rss.title")` 改为解压相关 key
-- [ ] **PluginManager 类型去重**：从 `tauri-api.ts` 导入 PluginInfo
-- [ ] **SettingSwitch ARIA**：添加 `role="switch"` 和 `aria-checked`
-- [ ] **对话框焦点捕获**：所有对话框添加焦点捕获
-- [ ] **右键菜单 ARIA**：添加 `role="menuitem"` 和键盘导航
-- [ ] **App.tsx 状态简化**：9 个 useState 改为 reducer 或 openDialog 模式
-- [ ] **useTaskEvents 清理优化**：将 notifiedTasks 清理移至 store action
-- [ ] **allow_remote 死代码**：实现远程访问控制或移除字段
+- [ ] **对话框 ARIA**：所有自定义对话框添加 `role="dialog"`、`aria-modal="true"`、关闭按钮 `aria-label`
+- [ ] **Tab ARIA 语义**：`TaskDetail.tsx`、`SettingsDialog.tsx` 添加 `role="tablist/tab/tabpanel"`
+- [ ] **进度条 ARIA**：`TaskList.tsx` 添加 `role="progressbar"`、`aria-valuenow/min/max`
+- [ ] **右键菜单键盘导航**：`TaskList.tsx` 添加箭头键导航
+- [ ] **i18n.ts 清理**：删除未使用的 `STORAGE_KEY` 导出
+- [ ] **main.tsx 清理**：删除多余的 `import React`
 
 ## 测试补全
 
@@ -54,4 +54,4 @@
 
 ---
 
-*最后更新：2026-05-31*
+*最后更新：2026-06-03*
