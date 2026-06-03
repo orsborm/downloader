@@ -200,6 +200,8 @@ export const zh = {
     dhtConnected: "已连接",
     dhtDisconnected: "未连接",
     diskSpace: "磁盘空间",
+    kadNodes: "节点",
+    kadBootstrap: "引导中...",
   },
 
   // 设置对话框

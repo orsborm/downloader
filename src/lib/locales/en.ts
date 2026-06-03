@@ -201,6 +201,8 @@ export const en: Locale = {
     dhtConnected: "Connected",
     dhtDisconnected: "Disconnected",
     diskSpace: "Disk Space",
+    kadNodes: "nodes",
+    kadBootstrap: "bootstrapping...",
   },
 
   // Settings dialog

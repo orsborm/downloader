@@ -164,7 +164,7 @@ export function StatusBar() {
             className={kadBootstrapDone && kadNodes > 0 ? "text-success" : "text-warning"}
           />
           <span>
-            KAD: {kadBootstrapDone ? `${kadNodes} nodes` : "bootstrapping..."}
+            KAD: {kadBootstrapDone ? `${kadNodes} ${t("statusBar.kadNodes")}` : t("statusBar.kadBootstrap")}
           </span>
         </div>
       )}
