@@ -203,6 +203,7 @@ export const en: Locale = {
     diskSpace: "Disk Space",
     kadNodes: "nodes",
     kadBootstrap: "bootstrapping...",
+    kadDisconnected: "disconnected",
   },
 
   // Settings dialog

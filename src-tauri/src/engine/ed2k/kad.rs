@@ -184,7 +184,7 @@ pub struct KadStatus {
     pub node_count: usize,
     /// 监听端口
     pub listen_port: u16,
-    /// 是否已完成引导
+    /// 是否已完成引导尝试
     pub bootstrap_done: bool,
 }
 
@@ -215,6 +215,8 @@ pub struct KadEngine {
     local_id: KadId,
     /// 是否已启动
     running: bool,
+    /// 是否已完成引导尝试（无论是否收到响应）
+    bootstrap_attempted: bool,
     /// 持久 UDP 套接字（启动后绑定，所有 KAD 通信共用）
     socket: Option<Arc<UdpSocket>>,
     /// 监听端口（启动时绑定）
@@ -227,6 +229,7 @@ impl Clone for KadEngine {
             routing_table: self.routing_table.clone(),
             local_id: self.local_id,
             running: self.running,
+            bootstrap_attempted: self.bootstrap_attempted,
             socket: None, // 克隆时不复制 socket
             listen_port: self.listen_port,
         }
@@ -241,6 +244,7 @@ impl KadEngine {
             routing_table: KadRoutingTable::new(local_id),
             local_id,
             running: false,
+            bootstrap_attempted: false,
             socket: None,
             listen_port,
         }
@@ -285,11 +289,13 @@ impl KadEngine {
             }
         }
 
+        self.bootstrap_attempted = true;
+
         let total = self.routing_table.total_nodes();
         if total > 0 {
             info!("KAD 引导完成，路由表中共 {} 个节点", total);
         } else {
-            warn!("KAD 引导未收到响应，路由表为空");
+            info!("KAD 引导完成，未收到响应（ed2k 服务器可能不支持 KAD UDP）");
         }
 
         Ok(())
@@ -742,7 +748,7 @@ impl KadEngine {
             running: self.running,
             node_count: self.routing_table.total_nodes(),
             listen_port: self.listen_port,
-            bootstrap_done: self.routing_table.total_nodes() > 0,
+            bootstrap_done: self.bootstrap_attempted,
         }
     }
 

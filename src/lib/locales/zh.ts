@@ -202,6 +202,7 @@ export const zh = {
     diskSpace: "磁盘空间",
     kadNodes: "节点",
     kadBootstrap: "引导中...",
+    kadDisconnected: "未连接",
   },
 
   // 设置对话框

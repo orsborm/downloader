@@ -161,10 +161,10 @@ export function StatusBar() {
         <div className="hidden md:flex items-center gap-1 shrink-0">
           <Wifi
             size={12}
-            className={kadBootstrapDone && kadNodes > 0 ? "text-success" : "text-warning"}
+            className={kadNodes > 0 ? "text-success" : kadBootstrapDone ? "text-text-muted" : "text-warning"}
           />
           <span>
-            KAD: {kadBootstrapDone ? `${kadNodes} ${t("statusBar.kadNodes")}` : t("statusBar.kadBootstrap")}
+            KAD: {!kadBootstrapDone ? t("statusBar.kadBootstrap") : kadNodes > 0 ? `${kadNodes} ${t("statusBar.kadNodes")}` : t("statusBar.kadDisconnected")}
           </span>
         </div>
       )}
