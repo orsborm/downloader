@@ -1,7 +1,7 @@
 # 代码审查报告
 
 > 日期：2026-06-04
-> 基线：b3504b7 (2026-06-03 03:04)
+> 基线：b3504b7 + 修复
 > 审查范围：Rust 后端 (39 files, ~15,380 LOC) + React 前端 (49 files, ~15,600 LOC)
 > 测试：617 前端 + 125 Rust = 742 测试
 
@@ -11,73 +11,69 @@
 
 | 状态 | 数量 |
 |---|---|
-| 安全加固已完成 | 7 项 ✅ |
-| 本次修复 | 3 项 |
-| 新增功能 | 1 项（版本管理） |
-| 剩余 LOW | 2 项 |
+| 安全加固（累计） | 11 项 ✅ |
+| 稳定性修复 | 8 项 ✅ |
+| UI 修复 | 5 项 ✅ |
+| 剩余 LOW | 3 项 |
 
 ---
 
-## 安全加固（已确认）
+## 本次修复清单
 
-| 项目 | 文件 | 状态 |
+### 安全修复
+| 项目 | 文件 | 说明 |
 |------|------|------|
-| CORS 白名单 | `api/mod.rs:166-184` | ✅ localhost-only，有测试 |
-| API Token 认证 | `api/mod.rs:212-251` | ✅ 空 token 拒绝所有请求 |
-| SpeedChart XSS | `SpeedChart.tsx:239` | ✅ DOM API + textContent |
-| WASM 沙箱 | `plugin/loader.rs` | ✅ 64MB 内存 + fuel 限制 |
-| 路径遍历防护 | `plugin/loader.rs:15-64` | ✅ canonicalize + 目录白名单 |
-| DB 初始化 | `main.rs:121-124` | ✅ ? 传播，无 panic |
-| Shell 注入防护 | `main.rs:73-96` | ✅ 白名单方式（本次修复） |
+| Shell 注入白名单 | `main.rs:73-96` | 黑名单→白名单，阻断所有 shell 元字符 |
+| DB JSON 安全访问 | `storage/db.rs:806` | `match` 替代 `unwrap().unwrap()` |
+| Plugin 域名白名单 | `plugin/loader.rs:274-287` | http_get 检查 allowed_domains |
+| RPC 文件名验证 | `api/rpc.rs:117` | addTask 调用 validate_filename |
+
+### 稳定性修复
+| 项目 | 文件 | 说明 |
+|------|------|------|
+| save_task_params 日志 | `commands/task.rs:76` | `let _ =` → `warn!` |
+| 暂停/恢复批量日志 | `commands/task.rs:329,381` | `let _ =` → `warn!` |
+| 删除任务日志 | `commands/task.rs:447` | `let _ =` → `warn!` |
+| 文件列表保存日志 | `commands/task.rs:751` | `let _ =` → `warn!` |
+| 恢复任务状态日志 | `commands/task.rs:520` | `let _ =` → `warn!` |
+| 启动恢复日志 | `main.rs:495` | `let _ =` → `warn!` |
+| RPC DB 操作日志 | `api/rpc.rs:170,189,208` | `let _ =` → `warn!` |
+| resume_all_tasks 竞争 | `commands/task.rs:367-377` | 批量获取 manager 锁 |
+
+### UI 修复
+| 项目 | 文件 | 说明 |
+|------|------|------|
+| 设置页文本换行 | `SettingsDialog.tsx:236` | 添加 `break-words` |
+| 任务名 hover 提示 | `TaskList.tsx:276` | 添加 `title={task.name}` |
+| URL hover 提示 | `TaskDetail.tsx:105` | 添加 `title={task.url}` |
+| 插件描述 hover 提示 | `PluginManager.tsx:169` | 添加 `title` 属性 |
+| Toast 定时器清理 | `Toast.tsx:87-91` | 卸载时清除所有 setTimeout |
+
+### 代码清理
+| 项目 | 文件 | 说明 |
+|------|------|------|
+| 删除 Dialog.tsx | `components/Dialog.tsx` | 153 行死代码（无组件导入） |
 
 ---
 
-## 本次修复
-
-### 1. Shell 命令注入加固
-- **文件**: `main.rs:73-96`
-- **原问题**: 黑名单仅 9 个字符，缺少 `\n\r><!#'"` 等
-- **修复**: 改用白名单方式，仅允许 `a-zA-Z0-9 .-_/:=@[],+~`
-- **安全性**: 阻断所有 shell 元字符和控制字符
-
-### 2. DB JSON 链式 unwrap 修复
-- **文件**: `storage/db.rs:801-806`
-- **原问题**: `meta.get_mut("mirrorUrls").unwrap().as_array_mut().unwrap()` 可能 panic
-- **修复**: 改为 `match ... { Some(arr) => arr, None => return Ok(()) }`
-
-### 3. Plugin http_get 域名白名单
-- **文件**: `plugin/loader.rs:274-287`
-- **原问题**: `LoaderConfig::allowed_domains` 字段存在但未在 http_get 中检查
-- **修复**: 添加域名白名单检查，仅在配置了 allowed_domains 时生效
-- **安全性**: 支持精确匹配和子域名匹配（`*.example.com`）
-
----
-
-## 新增功能：版本管理
-
-- **文件**: `scripts/version.ps1`
-- **功能**: 统一管理 package.json + tauri.conf.json + Cargo.toml 三处版本号
-- **用法**:
-  ```
-  .\scripts\version.ps1              # 显示当前版本
-  .\scripts\version.ps1 patch         # 1.0.0 → 1.0.1
-  .\scripts\version.ps1 minor         # 1.0.0 → 1.1.0
-  .\scripts\version.ps1 major         # 1.0.0 → 2.0.0
-  .\scripts\version.ps1 set 1.2.3     # 直接设置
-  ```
-- **编码**: 使用 UTF8NoBOM 避免 PowerShell 5.1 BOM 问题
-
----
-
-## 生产代码 unwrap() 审计
+## 生产代码 unwrap() 审计（最终）
 
 | 位置 | 风险 | 说明 |
 |------|------|------|
-| `db.rs:806` | 无风险 | 已修复为 match 安全访问 |
 | `http.rs:81-82` | 无风险 | 前置 `len < 2` 守卫 |
 | `api/mod.rs:170-175` | 无风险 | 编译时常量 URI parse |
 | `api/mod.rs:271,290` | 无风险 | Body::from(&str) 不可失败 |
 | `main.rs:646` | 合理 | Tauri 启动失败无法恢复 |
+| `plugin/loader.rs:123` | 低风险 | reqwest ClientBuilder，极不可能失败 |
+
+---
+
+## `let _ =` 审计（最终）
+
+所有生产代码 `let _ =` 模式已修复为带日志的 `if let Err(e) =` 模式。剩余 `let _ =` 仅用于：
+- `mpsc::send()` — 接收端丢弃时忽略（正确）
+- `std::process::Command::spawn()` — 系统命令 fire-and-forget（可接受）
+- 测试中的清理操作
 
 ---
 
@@ -85,19 +81,9 @@
 
 | # | 文件 | 问题 |
 |---|------|------|
-| L1 | `plugin/loader.rs:121` | `expect("failed to build HTTP client")` 可改为 `unwrap_or_default()` |
-| L2 | `api/mod.rs` WebSocket | auth 仅检查 header，未支持 query 参数 |
-
----
-
-## 架构优势
-
-- **模块化清晰**: engine/storage/api/plugin/rss/schedule/archive 各司其职
-- **错误处理一致**: `anyhow::Result` 内部 + `Result<T, String>` IPC 边界
-- **测试覆盖良好**: 742 测试（617 前端 + 125 Rust）
-- **无 unsafe 代码**: 全代码库无 unsafe 块
-- **无 XSS 风险**: 无 dangerouslySetInnerHTML/innerHTML/eval
-- **安全多层防御**: CORS + Token + WASM 沙箱 + 路径遍历 + 命令白名单 + 域名白名单
+| L1 | `engine/http.rs:111` | `expect()` 可改为 `unwrap_or_default()` |
+| L2 | `engine/hls/mod.rs:117` | `expect()` 可改为 `unwrap_or_default()` |
+| L3 | `plugin/loader.rs:123` | `expect()` 可改为 `unwrap_or_default()` |
 
 ---
 

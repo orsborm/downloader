@@ -6,36 +6,54 @@
 
 ## 安全加固
 
-- [x] **Shell 命令注入加固**：`main.rs` 改用白名单方式过滤命令字符
-- [x] **CORS 白名单**：`api/mod.rs` 仅允许 localhost 来源
-- [x] **API Token 认证**：`api/mod.rs` 空 token 拒绝所有请求
-- [x] **SpeedChart XSS**：`SpeedChart.tsx` 使用 DOM API 替代 innerHTML
-- [x] **WASM 沙箱**：`plugin/loader.rs` 64MB 内存限制 + fuel 限制
-- [x] **路径遍历防护**：`plugin/loader.rs` canonicalize + 目录白名单
-- [x] **DB 初始化安全**：`main.rs` ? 传播，无 panic
-- [x] **DB JSON 安全访问**：`storage/db.rs` match 替代 chain unwrap
-- [x] **Plugin 域名白名单**：`plugin/loader.rs` http_get 检查 allowed_domains
+- [x] **Shell 命令注入加固**：白名单方式
+- [x] **CORS 白名单**：仅允许 localhost
+- [x] **API Token 认证**：空 token 拒绝所有请求
+- [x] **SpeedChart XSS**：DOM API 替代 innerHTML
+- [x] **WASM 沙箱**：64MB 内存 + fuel 限制
+- [x] **路径遍历防护**：canonicalize + 目录白名单
+- [x] **DB 初始化安全**：? 传播
+- [x] **DB JSON 安全访问**：match 替代 chain unwrap
+- [x] **Plugin 域名白名单**：http_get 检查 allowed_domains
+- [x] **RPC 文件名验证**：addTask 调用 validate_filename
+
+## 稳定性
+
+- [x] **Error Boundary**：根级 ErrorBoundary
+- [x] **任务参数持久化日志**：save_task_params 失败记录日志
+- [x] **批量操作日志**：pause/resume/delete 失败记录日志
+- [x] **启动恢复日志**：update_task_state 失败记录日志
+- [x] **RPC DB 操作日志**：delete/pause/resume 失败记录日志
+- [x] **resume_all_tasks 竞争修复**：批量获取 manager 锁
+
+## UI 修复
+
+- [x] **设置页文本换行**：SettingRow 添加 break-words
+- [x] **任务名 hover 提示**：TaskList title 属性
+- [x] **URL hover 提示**：TaskDetail title 属性
+- [x] **插件描述 hover 提示**：PluginManager title 属性
+- [x] **Toast 定时器清理**：卸载时清除所有 setTimeout
+- [x] **删除 Dialog.tsx**：153 行死代码
 
 ## 版本管理
 
-- [x] **版本管理脚本**：`scripts/version.ps1` 统一管理三处版本号
+- [x] **版本管理脚本**：`scripts/version.ps1`
 
 ## 测试补全
 
-- [x] **Rust API 模块测试**：`api/mod.rs` CORS 白名单、JSON-RPC 格式、事件序列化
-- [x] **Rust 插件加载器测试**：`plugin/loader.rs` 路径遍历、WASM 验证、域名白名单
-- [x] **Rust 存储层测试**：`storage/db.rs` 枚举 roundtrip、DB 创建、镜像 URL
-- [ ] **Rust 核心模块测试**：`engine/task_manager.rs` 状态机、并发控制
-- [ ] **Rust HTTP 引擎测试**：`engine/http.rs` 下载、断点续传、代理
-- [ ] **前端组件渲染测试**：引入 React Testing Library
-- [ ] **Windows 打包验证**：`npm run tauri build` 生成便携 ZIP + NSIS
-- [ ] **依赖安全审计**：`npm audit` + `cargo audit`
+- [x] Rust API 模块测试
+- [x] Rust 插件加载器测试
+- [x] Rust 存储层测试
+- [ ] Rust 核心模块测试：`engine/task_manager.rs`
+- [ ] Rust HTTP 引擎测试：`engine/http.rs`
+- [ ] 前端组件渲染测试
+- [ ] Windows 打包验证
+- [ ] 依赖安全审计
 
 ## 已知限制
 
 - BT 引擎核心下载待集成 librqbit API 完整流程
 - ed2k KAD 实际网络连接待真实环境测试
-- 浏览器扩展与 Rust 后端联调待完成
 - RSS/Archive 模块需集成到 Tauri 命令层
 
 ---
