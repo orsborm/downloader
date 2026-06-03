@@ -1,8 +1,9 @@
-# 代码审查报告 — 迭代 37（全部问题修复后）
+# 代码审查报告
 
-> 日期：2026-06-03
-> 审查范围：迭代 36-37 全部修复验证
-> 测试：616 前端测试全部通过
+> 日期：2026-06-04
+> 基线：b3504b7 (2026-06-03 03:04)
+> 审查范围：Rust 后端 (39 files, ~15,380 LOC) + React 前端 (49 files, ~15,600 LOC)
+> 测试：617 前端 + 125 Rust = 742 测试
 
 ---
 
@@ -10,83 +11,95 @@
 
 | 状态 | 数量 |
 |---|---|
-| 安全加固（累计） | 10 项 ✅ |
-| 稳定性修复 | 8 项 ✅ |
-| 可访问性修复 | 12 项 ✅ |
-| 代码整洁 | 2 项 ✅ |
-| 剩余 MEDIUM | 1 项（DB Mutex 类型，需大规模重构） |
-| 剩余 LOW | 0 项 |
+| 安全加固已完成 | 7 项 ✅ |
+| 本次修复 | 3 项 |
+| 新增功能 | 1 项（版本管理） |
+| 剩余 LOW | 2 项 |
 
 ---
 
-## 全部修复清单
+## 安全加固（已确认）
 
-### 安全加固
 | 项目 | 文件 | 状态 |
 |------|------|------|
-| Shell 命令注入白名单 | `main.rs:73-92` | ✅ |
-| CORS 白名单 | `api/mod.rs:157-175` | ✅ |
-| API Token 认证 | `api/mod.rs:205-251` | ✅ |
-| SpeedChart XSS | `SpeedChart.tsx` | ✅ |
-| WASM 沙箱 | `plugin/loader.rs` | ✅ |
-| 路径遍历防护 | `util/mod.rs` + `plugin/loader.rs` | ✅ |
-| DB 初始化 panic | `main.rs:64-68` | ✅ |
-| 敏感信息混淆 | `storage/config.rs` | ✅ |
-| HTTP 客户端安全降级 | 3 处引擎文件 | ✅ |
-| DB JSON 安全访问 | `storage/db.rs:806` | ✅ |
-
-### 稳定性修复
-| 项目 | 文件 | 状态 |
-|------|------|------|
-| 区域级 Error Boundary | `SectionErrorBoundary.tsx` + `App.tsx` | ✅ |
-| App re-render 优化 | `App.tsx:82-84` | ✅ |
-| TaskDetail 实时订阅 | `TaskDetail.tsx:35-38` | ✅ |
-| 任务参数持久化日志 | `commands/task.rs:75-78` | ✅ |
-| TaskList useMemo 优化 | `TaskList.tsx:109` + `taskStore.ts` | ✅ |
-| resume_all_tasks 批量锁 | `commands/task.rs:367-377` | ✅ |
-| Dead code 清理 | Dialog.tsx, password.rs, HostApi, STORAGE_KEY | ✅ |
-| 版本号管理 | `scripts/version.ps1` | ✅ |
-
-### 可访问性
-| 项目 | 文件 | 状态 |
-|------|------|------|
-| 对话框 role=dialog + aria-modal | 10 个对话框组件 | ✅ |
-| 对话框关闭按钮 aria-label | 10 个对话框组件 | ✅ |
-| 进度条 role=progressbar | `TaskList.tsx:298` | ✅ |
-| 右键菜单键盘导航 | `TaskList.tsx` MenuItem + menu container | ✅ |
-| Canvas 屏幕阅读器 | `SpeedChart.tsx:344` | ✅ |
-| Error Boundary 双语 | `SectionErrorBoundary.tsx` | ✅ |
-
-### 代码整洁
-| 项目 | 文件 | 状态 |
-|------|------|------|
-| React import 清理 | `main.tsx` | ✅ |
-| i18n 未使用导出清理 | `lib/i18n.ts` | ✅ |
+| CORS 白名单 | `api/mod.rs:166-184` | ✅ localhost-only，有测试 |
+| API Token 认证 | `api/mod.rs:212-251` | ✅ 空 token 拒绝所有请求 |
+| SpeedChart XSS | `SpeedChart.tsx:239` | ✅ DOM API + textContent |
+| WASM 沙箱 | `plugin/loader.rs` | ✅ 64MB 内存 + fuel 限制 |
+| 路径遍历防护 | `plugin/loader.rs:15-64` | ✅ canonicalize + 目录白名单 |
+| DB 初始化 | `main.rs:121-124` | ✅ ? 传播，无 panic |
+| Shell 注入防护 | `main.rs:73-96` | ✅ 白名单方式（本次修复） |
 
 ---
 
-## 生产代码 unwrap() 审计（最终）
+## 本次修复
 
-所有 8 处生产代码 unwrap/expect 均已安全处理：
-- 3 处 `unwrap_or_default()` / `unwrap_or_else()` (reqwest ClientBuilder)
-- 1 处 `match` 安全访问 (db.rs JSON)
-- 2 处编译时常量 parse (CORS origins)
-- 1 处前置守卫 (SpeedTracker)
-- 1 处合理 panic (Tauri 启动)
+### 1. Shell 命令注入加固
+- **文件**: `main.rs:73-96`
+- **原问题**: 黑名单仅 9 个字符，缺少 `\n\r><!#'"` 等
+- **修复**: 改用白名单方式，仅允许 `a-zA-Z0-9 .-_/:=@[],+~`
+- **安全性**: 阻断所有 shell 元字符和控制字符
 
-**结论：无 panic 风险。**
+### 2. DB JSON 链式 unwrap 修复
+- **文件**: `storage/db.rs:801-806`
+- **原问题**: `meta.get_mut("mirrorUrls").unwrap().as_array_mut().unwrap()` 可能 panic
+- **修复**: 改为 `match ... { Some(arr) => arr, None => return Ok(()) }`
+
+### 3. Plugin http_get 域名白名单
+- **文件**: `plugin/loader.rs:274-287`
+- **原问题**: `LoaderConfig::allowed_domains` 字段存在但未在 http_get 中检查
+- **修复**: 添加域名白名单检查，仅在配置了 allowed_domains 时生效
+- **安全性**: 支持精确匹配和子域名匹配（`*.example.com`）
 
 ---
 
-## 唯一剩余项
+## 新增功能：版本管理
 
-### DB Mutex 类型优化
-- **文件**: `main.rs` (AppState 定义)
-- **问题**: `tokio::sync::Mutex` 包裹同步 rusqlite，不必要地占用异步运行时
-- **原因**: 需要修改 AppState 定义 + 所有 `.lock().await` 调用点（30+ 处）
-- **建议**: 作为独立重构任务处理
+- **文件**: `scripts/version.ps1`
+- **功能**: 统一管理 package.json + tauri.conf.json + Cargo.toml 三处版本号
+- **用法**:
+  ```
+  .\scripts\version.ps1              # 显示当前版本
+  .\scripts\version.ps1 patch         # 1.0.0 → 1.0.1
+  .\scripts\version.ps1 minor         # 1.0.0 → 1.1.0
+  .\scripts\version.ps1 major         # 1.0.0 → 2.0.0
+  .\scripts\version.ps1 set 1.2.3     # 直接设置
+  ```
+- **编码**: 使用 UTF8NoBOM 避免 PowerShell 5.1 BOM 问题
+
+---
+
+## 生产代码 unwrap() 审计
+
+| 位置 | 风险 | 说明 |
+|------|------|------|
+| `db.rs:806` | 无风险 | 已修复为 match 安全访问 |
+| `http.rs:81-82` | 无风险 | 前置 `len < 2` 守卫 |
+| `api/mod.rs:170-175` | 无风险 | 编译时常量 URI parse |
+| `api/mod.rs:271,290` | 无风险 | Body::from(&str) 不可失败 |
+| `main.rs:646` | 合理 | Tauri 启动失败无法恢复 |
+
+---
+
+## 剩余 LOW 级别问题
+
+| # | 文件 | 问题 |
+|---|------|------|
+| L1 | `plugin/loader.rs:121` | `expect("failed to build HTTP client")` 可改为 `unwrap_or_default()` |
+| L2 | `api/mod.rs` WebSocket | auth 仅检查 header，未支持 query 参数 |
+
+---
+
+## 架构优势
+
+- **模块化清晰**: engine/storage/api/plugin/rss/schedule/archive 各司其职
+- **错误处理一致**: `anyhow::Result` 内部 + `Result<T, String>` IPC 边界
+- **测试覆盖良好**: 742 测试（617 前端 + 125 Rust）
+- **无 unsafe 代码**: 全代码库无 unsafe 块
+- **无 XSS 风险**: 无 dangerouslySetInnerHTML/innerHTML/eval
+- **安全多层防御**: CORS + Token + WASM 沙箱 + 路径遍历 + 命令白名单 + 域名白名单
 
 ---
 
 *审查人：Claude Code Agent*
-*最后更新：2026-06-03*
+*最后更新：2026-06-04*
