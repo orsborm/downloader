@@ -66,3 +66,12 @@ pub async fn get_api_status(
         ws_connections,
     })
 }
+
+/// 获取 KAD（ed2k Kademlia DHT）状态
+#[tauri::command]
+pub async fn get_kad_status(
+    state: State<'_, AppState>,
+) -> Result<Option<crate::engine::ed2k::kad::KadStatus>, String> {
+    let manager = state.task_manager.lock().await;
+    Ok(manager.get_kad_status())
+}

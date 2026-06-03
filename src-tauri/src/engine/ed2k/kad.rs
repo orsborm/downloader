@@ -174,6 +174,20 @@ impl KadRoutingTable {
     }
 }
 
+/// KAD 状态信息
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KadStatus {
+    /// 是否正在运行
+    pub running: bool,
+    /// 路由表节点数
+    pub node_count: usize,
+    /// 监听端口
+    pub listen_port: u16,
+    /// 是否已完成引导
+    pub bootstrap_done: bool,
+}
+
 /// KAD 操作类型
 #[derive(Debug, Clone, Copy)]
 pub enum KadOperation {
@@ -722,9 +736,14 @@ impl KadEngine {
         debug!("KAD 维护完成，路由表: {} 个节点", total);
     }
 
-    /// 获取路由表状态
-    pub fn status(&self) -> (bool, usize) {
-        (self.running, self.routing_table.total_nodes())
+    /// 获取 KAD 状态
+    pub fn status(&self) -> KadStatus {
+        KadStatus {
+            running: self.running,
+            node_count: self.routing_table.total_nodes(),
+            listen_port: self.listen_port,
+            bootstrap_done: self.routing_table.total_nodes() > 0,
+        }
     }
 
     /// 停止 KAD 网络

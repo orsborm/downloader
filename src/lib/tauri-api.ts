@@ -318,6 +318,19 @@ export async function getApiStatus(): Promise<ApiStatusInfo> {
   return invoke<ApiStatusInfo>("get_api_status");
 }
 
+/** KAD（ed2k Kademlia DHT）状态 */
+export interface KadStatusInfo {
+  running: boolean;
+  nodeCount: number;
+  listenPort: number;
+  bootstrapDone: boolean;
+}
+
+/** 获取 KAD 状态 */
+export async function getKadStatus(): Promise<KadStatusInfo | null> {
+  return invoke<KadStatusInfo | null>("get_kad_status");
+}
+
 // ---- 调度管理 ----
 
 /** 调度规则类型 */

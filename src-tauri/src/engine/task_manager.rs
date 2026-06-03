@@ -739,6 +739,11 @@ impl TaskManager {
         self.ed2k_engine.maintain_kad().await;
     }
 
+    /// 获取 KAD 状态
+    pub fn get_kad_status(&self) -> Option<crate::engine::ed2k::kad::KadStatus> {
+        self.ed2k_engine.kad_status()
+    }
+
     /// 更新 BT 做种配置
     pub fn set_bt_seeding_config(&mut self, seed_ratio: f64, seed_time: u64, stop_seeding: bool) {
         self.bt_engine.set_seeding_config(seed_ratio, seed_time, stop_seeding);

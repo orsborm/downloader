@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Download, Upload, Activity, Wifi, Globe } from "lucide-react";
 import { useTaskStore } from "../stores/taskStore";
 import { formatSpeed } from "../lib/format";
-import { getBtStatus, getAppInfo, getApiStatus } from "../lib/tauri-api";
+import { getBtStatus, getAppInfo, getApiStatus, getKadStatus } from "../lib/tauri-api";
 import { useI18n } from "../hooks/useI18n";
 
 export function StatusBar() {
@@ -35,6 +35,9 @@ export function StatusBar() {
   }, [tasks]);
   const [dhtNodes, setDhtNodes] = useState(0);
   const [dhtConnected, setDhtConnected] = useState(false);
+  const [kadNodes, setKadNodes] = useState(0);
+  const [kadRunning, setKadRunning] = useState(false);
+  const [kadBootstrapDone, setKadBootstrapDone] = useState(false);
   const [version, setVersion] = useState("v1.0.0");
   const [apiPort, setApiPort] = useState(0);
   const [wsConnections, setWsConnections] = useState(0);
@@ -67,9 +70,26 @@ export function StatusBar() {
     fetchBtStatus();
     const timer = setInterval(fetchBtStatus, 5000);
 
+    // KAD 状态（与 BT 同步轮询）
+    const fetchKadStatus = async () => {
+      try {
+        const kad = await getKadStatus();
+        if (mounted && kad) {
+          setKadRunning(kad.running);
+          setKadNodes(kad.nodeCount);
+          setKadBootstrapDone(kad.bootstrapDone);
+        }
+      } catch {
+        // ed2k 引擎可能未初始化
+      }
+    };
+    fetchKadStatus();
+    const kadTimer = setInterval(fetchKadStatus, 10000);
+
     return () => {
       mounted = false;
       clearInterval(timer);
+      clearInterval(kadTimer);
     };
   }, []);
 
@@ -135,6 +155,19 @@ export function StatusBar() {
           DHT: {dhtConnected ? `${dhtNodes} ${t("statusBar.dhtNodes")}` : t("statusBar.dhtDisconnected")}
         </span>
       </div>
+
+      {/* KAD 状态 */}
+      {kadRunning && (
+        <div className="hidden md:flex items-center gap-1 shrink-0">
+          <Wifi
+            size={12}
+            className={kadBootstrapDone && kadNodes > 0 ? "text-success" : "text-warning"}
+          />
+          <span>
+            KAD: {kadBootstrapDone ? `${kadNodes} nodes` : "bootstrapping..."}
+          </span>
+        </div>
+      )}
 
       {/* 版本号 */}
       <span className="hidden lg:inline text-text-muted shrink-0">{version}</span>

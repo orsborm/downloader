@@ -197,8 +197,8 @@ impl Ed2kEngine {
         info!("KAD 引导: {} 个候选节点", bootstrap_addrs.len());
         match kad.start(&bootstrap_addrs).await {
             Ok(()) => {
-                let (running, nodes) = kad.status();
-                info!("KAD 启动: running={}, 路由表节点数={}", running, nodes);
+                let s = kad.status();
+                info!("KAD 启动: running={}, 路由表节点数={}", s.running, s.node_count);
             }
             Err(e) => {
                 warn!("KAD 启动失败: {}", e);
@@ -206,6 +206,11 @@ impl Ed2kEngine {
         }
 
         Ok(())
+    }
+
+    /// 获取 KAD 状态
+    pub fn kad_status(&self) -> Option<kad::KadStatus> {
+        self.kad_engine.as_ref().map(|k| k.status())
     }
 
     /// KAD 定期维护（清理过期节点、刷新路由表）

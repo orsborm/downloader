@@ -634,6 +634,7 @@ fn main() {
             commands::system::get_app_info,
             commands::system::get_bt_status,
             commands::system::get_api_status,
+            commands::system::get_kad_status,
             // RSS 订阅命令
             commands::rss::add_rss_feed,
             commands::rss::remove_rss_feed,
