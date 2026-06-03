@@ -1,0 +1,97 @@
+[package]
+name = "downloader"
+version = "1.0.0"
+edition = "2021"
+description = "全协议下载器 - 绿色便携、全协议支持、零广告"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# Tauri 框架
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-notification = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-clipboard = "2"
+
+# 序列化
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# 异步运行时
+tokio = { version = "1", features = ["full"] }
+
+# HTTP 客户端（支持流式下载、SOCKS5 代理）
+reqwest = { version = "0.12", features = ["stream", "socks", "cookies"] }
+
+# SQLite 持久化
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# TOML 配置
+toml = "0.8"
+
+# 日志
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+
+# 工具
+uuid = { version = "1", features = ["v4"] }
+bytes = "1"
+anyhow = "1"
+thiserror = "2"
+url = "2"
+chrono = { version = "0.4", features = ["serde"] }
+dirs-next = "2.0"           # 获取系统目录（下载目录等）
+urlencoding = "2.1"         # URL 编解码
+futures = "0.3"             # 异步流处理（StreamExt）
+tokio-util = "0.7"          # CancellationToken 等工具
+
+# BT 引擎（纯 Rust 实现）
+librqbit = { version = "8", features = ["default"] }
+
+# 速度限制（令牌桶）
+governor = "0.8"
+
+# 压缩/解压
+zip = "0.6"
+tar = "0.4"
+flate2 = "1"
+bzip2 = "0.5"
+xz2 = "0.1"
+sevenz-rust = "0.5"
+unrar = "0.5"
+
+# ed2k hash (MD4 + SHA1 for AICH)
+md4 = "0.10"
+sha1 = "0.10"
+
+# AES 加密（HLS 解密）
+aes = "0.8"
+cbc = "0.1"
+cipher = "0.4"
+
+# RSS 正则过滤
+regex = "1"
+
+# XML 解析（DASH MPD / RSS）
+quick-xml = "0.36"
+
+# WASM 插件运行时
+wasmtime = "29"
+
+# JSON-RPC API 服务
+axum = { version = "0.7", features = ["ws"] }
+tokio-tungstenite = "0.21"
+tower-http = { version = "0.5", features = ["cors"] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+strip = true        # 去除调试符号，减小二进制体积
+lto = true          # 链接时优化，提升运行性能
+codegen-units = 1   # 单编译单元，更好的优化（牺牲编译速度）
+opt-level = "s"     # 体积优先优化（桌面应用体积更重要）
+panic = "abort"     # panic 时直接 abort，减小体积

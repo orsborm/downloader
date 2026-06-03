@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全协议下载器</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      width: 360px;
+      background: #fff;
+      color: #333;
+    }
+    .header {
+      background: #3b82f6;
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 { font-size: 16px; font-weight: 600; }
+    .status { font-size: 12px; }
+    .status.connected { color: #86efac; }
+    .status.disconnected { color: #fca5a5; }
+    .content { padding: 12px; }
+    .section { margin-bottom: 16px; }
+    .section h3 {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #eee;
+    }
+    .link-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .link-item:hover { background: #f0f7ff; }
+    .link-item .type {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .type-video { background: #dbeafe; color: #2563eb; }
+    .type-hls { background: #fce7f3; color: #db2777; }
+    .type-file { background: #d1fae5; color: #059669; }
+    .link-item .url {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #666;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-secondary { background: #f1f5f9; color: #475569; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-block { width: 100%; }
+    .empty { text-align: center; color: #94a3b8; padding: 20px; font-size: 13px; }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .toggle input[type="checkbox"] { width: 16px; height: 16px; }
+    .footer { padding: 8px 12px; border-top: 1px solid #eee; text-align: center; }
+    .footer a { color: #3b82f6; font-size: 12px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>全协议下载器</h1>
+    <span class="status disconnected" id="status">未连接</span>
+  </div>
+
+  <div class="content">
+    <!-- 拦截开关 -->
+    <div class="section">
+      <label class="toggle">
+        <input type="checkbox" id="interceptToggle">
+        <span>自动拦截浏览器下载</span>
+      </label>
+    </div>
+
+    <!-- 当前页面资源 -->
+    <div class="section">
+      <h3>页面资源</h3>
+      <div id="resources">
+        <div class="empty">正在检测...</div>
+      </div>
+    </div>
+
+    <!-- 手动输入 -->
+    <div class="section">
+      <h3>手动添加链接</h3>
+      <input type="text" id="manualUrl" placeholder="输入下载链接..."
+        style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-size:12px; margin-bottom:8px;">
+      <button class="btn btn-primary btn-block" id="addManual">添加到下载器</button>
+    </div>
+
+    <!-- 批量下载 -->
+    <div class="section">
+      <button class="btn btn-secondary btn-block" id="batchDownload">
+        批量下载页面所有链接
+      </button>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="#" id="openDownloader">打开下载器主窗口</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

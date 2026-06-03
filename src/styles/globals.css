@@ -1,0 +1,157 @@
+/* 全局样式 + 主题变量 */
+/* 亮色/暗色主题通过 CSS 变量切换 */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 亮色主题（默认） */
+:root,
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --progress-bg: #e2e8f0;
+  --progress-fill: #3b82f6;
+}
+
+/* 暗色主题 */
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border: #334155;
+  --accent: #60a5fa;
+  --accent-hover: #93bbfd;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --error: #f87171;
+  --progress-bg: #334155;
+  --progress-fill: #60a5fa;
+}
+
+/* 基础样式 */
+@layer base {
+  html {
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-primary text-text-primary;
+    font-family: "JetBrains Mono", "Cascadia Code", "Consolas",
+      "Microsoft YaHei", sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* 滚动条样式 */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+  }
+
+  /* 选中文本颜色 */
+  ::selection {
+    background: rgba(59, 130, 246, 0.25);
+    color: var(--text-primary, #0f172a);
+  }
+}
+
+/* 进度条组件 */
+@layer components {
+  .progress-bar {
+    @apply h-2.5 rounded-full overflow-hidden relative;
+    background: var(--progress-bg);
+  }
+
+  .progress-bar-fill {
+    @apply h-full rounded-full transition-all duration-300 ease-out;
+    background: var(--progress-fill);
+  }
+
+  /* 进度条状态颜色 */
+  .progress-bar-fill.state-downloading {
+    background: var(--accent);
+    animation: progress-pulse 2s ease-in-out infinite;
+  }
+  .progress-bar-fill.state-done {
+    background: var(--success);
+  }
+  .progress-bar-fill.state-error {
+    background: var(--error);
+  }
+  .progress-bar-fill.state-paused {
+    background: var(--warning);
+  }
+  .progress-bar-fill.state-seeding {
+    background: var(--success);
+  }
+  .progress-bar-fill.state-queued {
+    background: var(--text-muted);
+  }
+
+  /* 下载中脉冲动画 */
+  @keyframes progress-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* 全局进度条（状态栏） */
+  .global-progress {
+    @apply h-1 rounded-full overflow-hidden;
+    background: var(--progress-bg);
+    min-width: 80px;
+  }
+  .global-progress-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+    background: var(--accent);
+  }
+
+  /* 状态图标颜色 */
+  .state-downloading {
+    @apply text-accent;
+  }
+  .state-paused {
+    @apply text-warning;
+  }
+  .state-done {
+    @apply text-success;
+  }
+  .state-error {
+    @apply text-error;
+  }
+  .state-seeding {
+    @apply text-success;
+  }
+  .state-queued {
+    @apply text-text-muted;
+  }
+}
