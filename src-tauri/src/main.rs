@@ -158,19 +158,6 @@ fn main() {
             // 传递 ed2k 自定义服务器列表
             task_manager.set_ed2k_servers(config.connection.ed2k_servers.clone());
 
-            // 启动 KAD 网络（使用 ed2k 服务器作为引导节点）
-            tauri::async_runtime::block_on(async {
-                task_manager.start_kad().await;
-            });
-
-            // 初始化 BT 引擎
-            let default_dir = config.download.default_dir.clone();
-            tauri::async_runtime::block_on(async {
-                if let Err(e) = task_manager.init_bt_engine(&default_dir).await {
-                    warn!("BT 引擎初始化失败: {}（BT 下载功能不可用）", e);
-                }
-            });
-
             // 初始化插件管理器
             let plugin_dir = app_dir.join("plugins");
             let mut plugin_manager = PluginManager::new(plugin_dir);
@@ -269,6 +256,27 @@ fn main() {
             // 取出事件接收端，启动事件转发到前端和 DB 持久化
             let state_ref = app.state::<AppState>();
             let app_handle = app.handle().clone();
+
+            // 启动 KAD 网络（后台异步，不阻塞窗口显示）
+            {
+                let tm = state_ref.task_manager.clone();
+                tauri::async_runtime::spawn(async move {
+                    let mut mgr = tm.lock().await;
+                    mgr.start_kad().await;
+                });
+            }
+
+            // 初始化 BT 引擎（后台异步，不阻塞窗口显示）
+            {
+                let tm = state_ref.task_manager.clone();
+                let default_dir = config.download.default_dir.clone();
+                tauri::async_runtime::spawn(async move {
+                    let mut mgr = tm.lock().await;
+                    if let Err(e) = mgr.init_bt_engine(&default_dir).await {
+                        tracing::warn!("BT 引擎初始化失败: {}（BT 下载功能不可用）", e);
+                    }
+                });
+            }
 
             // 启动 JSON-RPC API 服务器
             if api_port > 0 {
