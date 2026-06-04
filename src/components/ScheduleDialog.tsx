@@ -116,7 +116,7 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
   const handleAddRule = async () => {
     // 验证 cron 表达式
     if (!isValidCron(ruleForm.cronExpression)) {
-      showToast(t("schedule.rule.addFailed", { error: "Invalid cron expression (expected 5 fields)" }), "error");
+      showToast(t("schedule.rule.addFailed", { error: t("schedule.rule.invalidCron") || "无效的 cron 表达式（需要 5 个字段）" }), "error");
       return;
     }
     try {
@@ -149,7 +149,7 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
 
     // 验证 cron 表达式
     if (!isValidCron(ruleForm.cronExpression)) {
-      showToast(t("schedule.rule.updateFailed", { error: "Invalid cron expression (expected 5 fields)" }), "error");
+      showToast(t("schedule.rule.updateFailed", { error: t("schedule.rule.invalidCron") || "无效的 cron 表达式（需要 5 个字段）" }), "error");
       return;
     }
 

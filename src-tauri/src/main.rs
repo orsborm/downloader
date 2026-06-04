@@ -348,7 +348,7 @@ fn main() {
                                         event.downloaded,
                                         event.total_size,
                                     ) {
-                                        tracing::error!("定期保存进度失败: {}", e);
+                                        tracing::error!("定期保存进度失败: {} - {}", event.task_id, e);
                                     }
                                     drop(db);
                                     last_db_save.insert(event.task_id.clone(), now);

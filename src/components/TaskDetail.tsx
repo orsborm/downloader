@@ -171,8 +171,9 @@ function ConnectionsTab({ task }: { task: TaskStatus }) {
     try {
       const data = await getTaskPeers(task.id);
       setPeers(data);
-    } catch {
+    } catch (e) {
       setPeers([]);
+      console.warn("获取 peer 列表失败:", extractErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -248,8 +249,9 @@ function TrackerTab({ task }: { task: TaskStatus }) {
     try {
       const data = await getTaskTrackers(task.id);
       setTrackers(data);
-    } catch {
+    } catch (e) {
       setTrackers([]);
+      console.warn("获取 tracker 列表失败:", extractErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -332,7 +334,10 @@ function LogsTab({ task }: { task: TaskStatus }) {
   const [backendLogs, setBackendLogs] = useState<LogEntry[]>([]);
 
   useEffect(() => {
-    getTaskLogs(task.id, 50).then(setBackendLogs).catch(() => setBackendLogs([]));
+    getTaskLogs(task.id, 50).then(setBackendLogs).catch((e) => {
+      setBackendLogs([]);
+      console.warn("获取任务日志失败:", extractErrorMessage(e));
+    });
   }, [task.id]);
 
   // 合并后端日志和前端生成的日志（使用稳定时间戳，不因重渲染改变）
@@ -423,8 +428,9 @@ function MirrorTab({ task }: { task: TaskStatus }) {
     try {
       const data = await getMirrorUrls(task.id);
       setMirrors(data);
-    } catch {
+    } catch (e) {
       setMirrors([]);
+      console.warn("获取镜像源列表失败:", extractErrorMessage(e));
     }
   }, [task.id]);
 
@@ -445,7 +451,7 @@ function MirrorTab({ task }: { task: TaskStatus }) {
       setNewUrl("");
       await fetchMirrors();
     } catch (e) {
-      showToast(`${t("common.error")}: ${extractErrorMessage(e)}`, "error");
+      showToast(`${t("taskDetail.mirrors.addFailed") || "添加镜像源失败"}: ${extractErrorMessage(e)}`, "error");
     } finally {
       setLoading(false);
     }
@@ -456,7 +462,7 @@ function MirrorTab({ task }: { task: TaskStatus }) {
       await removeMirrorUrl(task.id, url);
       await fetchMirrors();
     } catch (e) {
-      showToast(`${t("common.error")}: ${extractErrorMessage(e)}`, "error");
+      showToast(`${t("taskDetail.mirrors.removeFailed") || "删除镜像源失败"}: ${extractErrorMessage(e)}`, "error");
     }
   }, [task.id, fetchMirrors, t]);
 

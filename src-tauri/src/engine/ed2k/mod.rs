@@ -78,35 +78,35 @@ pub fn parse_ed2k_link(url: &str) -> Result<Ed2kLink> {
     let url = url.trim();
 
     if !url.to_lowercase().starts_with("ed2k://") {
-        anyhow::bail!("不是有效的 ed2k 链接");
+        anyhow::bail!("不是有效的 ed2k 链接，必须以 ed2k:// 开头");
     }
 
     // 去掉 ed2k:// 前缀，按 | 分割
     let body = &url[7..];
     let parts: Vec<&str> = body.split('|').collect();
 
-    // 格式: |file|<name>|<size>|<hash>|/
+    // 格式: ed2k://|file|<文件名>|<文件大小>|<哈希值>|/
     if parts.len() < 5 {
-        anyhow::bail!("ed2k 链接格式不正确");
+        anyhow::bail!("ed2k 链接格式不正确，应为: ed2k://|file|文件名|大小|哈希值|/");
     }
 
     if parts[0] != "file" && parts[1] != "file" {
-        anyhow::bail!("ed2k 链接类型不是 file");
+        anyhow::bail!("ed2k 链接类型不是 file，当前仅支持文件下载");
     }
 
     let file_idx = if parts[0] == "file" { 1 } else { 2 };
     if parts.len() < file_idx + 4 {
-        anyhow::bail!("ed2k 链接参数不完整");
+        anyhow::bail!("ed2k 链接参数不完整，需要: 文件名、文件大小、哈希值");
     }
 
     let filename = parts[file_idx].to_string();
     let size: u64 = parts[file_idx + 1]
         .parse()
-        .map_err(|_| anyhow::anyhow!("ed2k 链接文件大小无效"))?;
+        .map_err(|_| anyhow::anyhow!("ed2k 链接文件大小无效: '{}'", parts[file_idx + 1]))?;
     let hash = parts[file_idx + 2].to_string();
 
     if hash.len() != 32 {
-        anyhow::bail!("ed2k hash 长度无效（应为 32 字符十六进制）");
+        anyhow::bail!("ed2k 哈希值长度无效（应为 32 字符十六进制，当前 {} 字符）", hash.len());
     }
 
     // 解析可选的服务器地址: ed2k://|file|name|size|hash|/|server,ip:port|/

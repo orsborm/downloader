@@ -408,7 +408,7 @@ impl TaskManager {
                         let link = match crate::engine::ed2k::parse_ed2k_link(&url) {
                             Ok(l) => l,
                             Err(e) => {
-                                tracing::error!("ed2k 链接解析失败: {}", e);
+                                tracing::error!("ed2k 链接解析失败: {} - {}", task_id, e);
                                 let _ = update_tx.send(TaskUpdateEvent {
                                     task_id: task_id.clone(),
                                     state: TaskState::Error,
@@ -660,7 +660,9 @@ impl TaskManager {
         for task_id in task_ids {
             if let Some(handle) = self.handles.get(&task_id) {
                 if matches!(handle.protocol, Protocol::Bt | Protocol::Magnet) {
-                    let _ = self.bt_engine.resume_task(&task_id).await;
+                    if let Err(e) = self.bt_engine.resume_task(&task_id).await {
+                        tracing::warn!("BT 恢复任务失败: {} - {}", task_id, e);
+                    }
                 } else {
                     let _ = handle.pause_tx.send(false);
                 }
@@ -686,7 +688,9 @@ impl TaskManager {
     pub async fn remove_task(&mut self, task_id: &str) -> Result<()> {
         if let Some(handle) = self.handles.remove(task_id) {
             if matches!(handle.protocol, Protocol::Bt | Protocol::Magnet) {
-                let _ = self.bt_engine.remove_task(task_id, false).await;
+                if let Err(e) = self.bt_engine.remove_task(task_id, false).await {
+                    tracing::warn!("BT 删除任务失败: {} - {}", task_id, e);
+                }
             } else {
                 handle.cancel_token.cancel();
             }
