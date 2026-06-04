@@ -239,6 +239,9 @@ fn main() {
             let mut archive_config = archive::ArchiveConfig::default();
             archive_config.passwords = archive_passwords;
 
+            // 提取 BT 引擎需要的默认下载目录（config 即将被 move）
+            let bt_default_dir = config.download.default_dir.clone();
+
             // 将全局状态注册到 Tauri
             let state = AppState {
                 db: Arc::new(TokioMutex::new(db)),
@@ -269,10 +272,9 @@ fn main() {
             // 初始化 BT 引擎（后台异步，不阻塞窗口显示）
             {
                 let tm = state_ref.task_manager.clone();
-                let default_dir = config.download.default_dir.clone();
                 tauri::async_runtime::spawn(async move {
                     let mut mgr = tm.lock().await;
-                    if let Err(e) = mgr.init_bt_engine(&default_dir).await {
+                    if let Err(e) = mgr.init_bt_engine(&bt_default_dir).await {
                         tracing::warn!("BT 引擎初始化失败: {}（BT 下载功能不可用）", e);
                     }
                 });
