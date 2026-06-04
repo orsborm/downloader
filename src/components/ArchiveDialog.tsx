@@ -4,6 +4,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { X, Archive, Plus, Trash2, Key } from "lucide-react";
 import { Toggle } from "./Toggle";
+import { extractErrorMessage } from "../lib/errors";
 import {
   getArchiveConfig,
   updateArchiveConfig,
@@ -41,7 +42,7 @@ export function ArchiveDialog({ onClose }: ArchiveDialogProps) {
         setExtractDir(config.extractDir);
         setPasswords(config.passwords);
       } catch (e) {
-        showToast(t("archive.loadFailed", { error: String(e) }), "error");
+        showToast(t("archive.loadFailed", { error: extractErrorMessage(e) }), "error");
       } finally {
         setLoading(false);
       }
@@ -93,7 +94,7 @@ export function ArchiveDialog({ onClose }: ArchiveDialogProps) {
       await updateArchiveConfig(config);
       onClose();
     } catch (e) {
-      showToast(t("archive.saveFailed", { error: String(e) }), "error");
+      showToast(t("archive.saveFailed", { error: extractErrorMessage(e) }), "error");
     } finally {
       setSaving(false);
     }
@@ -102,7 +103,7 @@ export function ArchiveDialog({ onClose }: ArchiveDialogProps) {
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-        <div className="bg-primary rounded-lg shadow-xl p-8 animate-fade-in">
+        <div className="bg-primary rounded-lg shadow-xl p-8 animate-fade-in" role="dialog" aria-modal="true">
           <span className="text-text-muted">{t("common.loading")}</span>
         </div>
       </div>
@@ -113,6 +114,8 @@ export function ArchiveDialog({ onClose }: ArchiveDialogProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div
         className="bg-primary rounded-lg shadow-xl w-full max-w-lg mx-4 animate-fade-in"
+        role="dialog"
+        aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 标题栏 */}
@@ -121,7 +124,7 @@ export function ArchiveDialog({ onClose }: ArchiveDialogProps) {
             <Archive size={20} />
             {t("archive.settingsTitle")}
           </h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-tertiary hover:text-text-primary transition-colors text-text-muted">
+          <button onClick={onClose} aria-label="Close" className="p-1 rounded hover:bg-tertiary hover:text-text-primary transition-colors text-text-muted">
             <X size={18} />
           </button>
         </div>

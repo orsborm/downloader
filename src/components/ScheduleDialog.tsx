@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { X, Clock, Plus, Trash2, Edit2 } from "lucide-react";
 import { showToast } from "./Toast";
+import { extractErrorMessage } from "../lib/errors";
 import { useI18n } from "../hooks/useI18n";
 import {
   ScheduleRule,
@@ -93,7 +94,7 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
       setRules(rulesData);
       setBandwidthSchedules(bandwidthData);
     } catch (error) {
-      showToast(t("schedule.loadFailed", { error: String(error) }), "error");
+      showToast(t("schedule.loadFailed", { error: extractErrorMessage(error) }), "error");
     } finally {
       setLoading(false);
     }
@@ -139,7 +140,7 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
       resetRuleForm();
       loadData();
     } catch (error) {
-      showToast(t("schedule.rule.addFailed", { error: String(error) }), "error");
+      showToast(t("schedule.rule.addFailed", { error: extractErrorMessage(error) }), "error");
     }
   };
 
@@ -172,7 +173,7 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
       resetRuleForm();
       loadData();
     } catch (error) {
-      showToast(t("schedule.rule.updateFailed", { error: String(error) }), "error");
+      showToast(t("schedule.rule.updateFailed", { error: extractErrorMessage(error) }), "error");
     }
   };
 
@@ -190,7 +191,7 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
       showToast(t("schedule.rule.deleted"), "success");
       loadData();
     } catch (error) {
-      showToast(t("schedule.rule.deleteFailed", { error: String(error) }), "error");
+      showToast(t("schedule.rule.deleteFailed", { error: extractErrorMessage(error) }), "error");
     }
   };
 
@@ -200,7 +201,7 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
       showToast(t("schedule.rule.toggled", { status: enabled ? t("schedule.rule.enabled") : t("schedule.rule.disabled") }), "success");
       loadData();
     } catch (error) {
-      showToast(t("schedule.rule.toggleFailed", { error: String(error) }), "error");
+      showToast(t("schedule.rule.toggleFailed", { error: extractErrorMessage(error) }), "error");
     }
   };
 
@@ -245,7 +246,7 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
       resetBandwidthForm();
       loadData();
     } catch (error) {
-      showToast(t("schedule.bandwidth.addFailed", { error: String(error) }), "error");
+      showToast(t("schedule.bandwidth.addFailed", { error: extractErrorMessage(error) }), "error");
     }
   };
 
@@ -268,7 +269,7 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
       resetBandwidthForm();
       loadData();
     } catch (error) {
-      showToast(t("schedule.bandwidth.updateFailed", { error: String(error) }), "error");
+      showToast(t("schedule.bandwidth.updateFailed", { error: extractErrorMessage(error) }), "error");
     }
   };
 
@@ -286,7 +287,7 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
       showToast(t("schedule.bandwidth.deleted"), "success");
       loadData();
     } catch (error) {
-      showToast(t("schedule.bandwidth.deleteFailed", { error: String(error) }), "error");
+      showToast(t("schedule.bandwidth.deleteFailed", { error: extractErrorMessage(error) }), "error");
     }
   };
 
@@ -344,7 +345,7 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-primary rounded-lg shadow-xl w-[90vw] max-w-[700px] max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-primary rounded-lg shadow-xl w-[90vw] max-w-[700px] max-h-[80vh] flex flex-col" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         {/* 头部 */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
@@ -353,6 +354,7 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="p-1 rounded hover:bg-tertiary text-text-muted hover:text-text-primary"
           >
             <X className="w-5 h-5" />

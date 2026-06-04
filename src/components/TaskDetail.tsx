@@ -15,6 +15,7 @@ import {
 import type { TaskStatus } from "../lib/types";
 import { useI18n } from "../hooks/useI18n";
 import { showToast } from "./Toast";
+import { extractErrorMessage } from "../lib/errors";
 import { getTaskPeers, getTaskTrackers, getTaskLogs, getMirrorUrls, addMirrorUrl, removeMirrorUrl } from "../lib/tauri-api";
 import type { PeerInfo, TrackerInfo, LogEntry } from "../lib/tauri-api";
 import {
@@ -444,7 +445,7 @@ function MirrorTab({ task }: { task: TaskStatus }) {
       setNewUrl("");
       await fetchMirrors();
     } catch (e) {
-      showToast(`${t("common.error")}: ${e}`, "error");
+      showToast(`${t("common.error")}: ${extractErrorMessage(e)}`, "error");
     } finally {
       setLoading(false);
     }
@@ -455,7 +456,7 @@ function MirrorTab({ task }: { task: TaskStatus }) {
       await removeMirrorUrl(task.id, url);
       await fetchMirrors();
     } catch (e) {
-      showToast(`${t("common.error")}: ${e}`, "error");
+      showToast(`${t("common.error")}: ${extractErrorMessage(e)}`, "error");
     }
   }, [task.id, fetchMirrors, t]);
 

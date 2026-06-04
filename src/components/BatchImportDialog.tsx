@@ -121,12 +121,14 @@ export function BatchImportDialog({ onClose }: BatchImportDialogProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div
         className="bg-primary rounded-lg shadow-xl w-full max-w-lg mx-4 animate-fade-in"
+        role="dialog"
+        aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 标题栏 */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-border">
           <h2 className="text-lg font-semibold text-text-primary">{t("batchImport.title")}</h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-tertiary hover:text-text-primary transition-colors text-text-muted">
+          <button onClick={onClose} aria-label="Close" className="p-1 rounded hover:bg-tertiary hover:text-text-primary transition-colors text-text-muted">
             <X size={18} />
           </button>
         </div>

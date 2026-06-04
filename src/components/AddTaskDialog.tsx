@@ -211,6 +211,8 @@ export function AddTaskDialog({ initialUrl, onClose }: AddTaskDialogProps) {
       >
         <div
           className="bg-primary rounded-lg shadow-xl w-full max-w-lg mx-4 animate-fade-in"
+          role="dialog"
+          aria-modal="true"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={handleKeyDown}
         >
@@ -219,6 +221,7 @@ export function AddTaskDialog({ initialUrl, onClose }: AddTaskDialogProps) {
             <h2 className="text-lg font-semibold text-text-primary">{t("addTask.title")}</h2>
             <button
               onClick={onClose}
+              aria-label="Close"
               className="p-1 rounded hover:bg-tertiary hover:text-text-primary transition-colors text-text-muted"
             >
               <X size={18} />

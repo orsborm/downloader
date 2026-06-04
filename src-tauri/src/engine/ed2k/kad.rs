@@ -39,11 +39,12 @@ impl KadId {
         128
     }
 
-    /// 判断是否比另一个 ID 更接近目标
+    /// 判断是否比另一个 ID 更接近目标（完整 128 位比较）
     pub fn is_closer_than(&self, target: &KadId, other: &KadId) -> bool {
         let dist_self = self.xor_distance(target);
         let dist_other = other.xor_distance(target);
-        dist_self.leading_zeros() > dist_other.leading_zeros()
+        // 逐字节比较，小的更近
+        dist_self.0 < dist_other.0
     }
 }
 
@@ -324,6 +325,16 @@ impl KadEngine {
             return;
         }
 
+        // 验证 KAD 协议标识和操作码
+        if data[0] != 0xE4 {
+            debug!("KAD 响应: 无效协议标识 0x{:02X}", data[0]);
+            return;
+        }
+        if data[5] != KadOperation::BootstrapRes as u8 {
+            debug!("KAD 响应: 非引导响应操作码 0x{:02X}", data[5]);
+            return;
+        }
+
         // 跳过协议头(1) + 长度(4) + 操作码(1) + 发送者ID(16) = 22字节
         let mut offset = 22;
         if offset + 1 > data.len() {
@@ -404,7 +415,8 @@ impl KadEngine {
                     Ok(nodes) => {
                         for n in nodes {
                             let dist = n.id.xor_distance(target);
-                            if dist.leading_zeros() > best_distance.leading_zeros() {
+                            // 完整 128 位比较：dist < best_distance 表示更近
+                            if dist.0 < best_distance.0 {
                                 best_distance = dist;
                                 new_nodes.push(n.clone());
                             }
@@ -698,7 +710,7 @@ impl KadEngine {
         offset += 1;
 
         for _ in 0..count {
-            // 每个源: [4B IP][2B port][2B TCP port]
+            // 每个源: [4B IP][2B UDP port][2B TCP port] = 8 bytes
             if offset + 8 > data.len() {
                 break;
             }
@@ -707,7 +719,8 @@ impl KadEngine {
             offset += 4;
 
             let port = u16::from_le_bytes([data[offset], data[offset + 1]]);
-            offset += 4; // 跳过 UDP port + TCP port
+            offset += 2; // UDP port
+            offset += 2; // TCP port (跳过)
 
             sources.push(SocketAddr::new(std::net::IpAddr::V4(ip), port));
         }

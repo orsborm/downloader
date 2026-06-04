@@ -146,12 +146,12 @@ impl BtEngine {
         // 构建速度限制配置
         let ratelimits = LimitsConfig {
             download_bps: if self.config.max_download_speed > 0 {
-                NonZeroU32::new(self.config.max_download_speed as u32)
+                NonZeroU32::new(self.config.max_download_speed.min(u32::MAX as u64) as u32)
             } else {
                 None
             },
             upload_bps: if self.config.max_upload_speed > 0 {
-                NonZeroU32::new(self.config.max_upload_speed as u32)
+                NonZeroU32::new(self.config.max_upload_speed.min(u32::MAX as u64) as u32)
             } else {
                 None
             },

@@ -173,18 +173,22 @@ impl Ed2kEngine {
             None => return Ok(()),
         };
 
-        // 收集引导节点地址（所有已知 ed2k 服务器的 UDP 端口）
+        // 收集引导节点地址
+        // ed2k 服务器 TCP 端口通常是 4661，KAD UDP 端口是 4672（TCP+11）
         let mut bootstrap_addrs: Vec<SocketAddr> = Vec::new();
         for (host, port) in DEFAULT_SERVERS {
             if let Ok(ip) = host.parse::<std::net::Ipv4Addr>() {
-                bootstrap_addrs.push(SocketAddr::new(std::net::IpAddr::V4(ip), *port));
+                // KAD 使用 UDP 端口 = ed2k TCP 端口 + 11
+                let kad_port = *port + 11;
+                bootstrap_addrs.push(SocketAddr::new(std::net::IpAddr::V4(ip), kad_port));
             }
         }
         // 添加用户自定义服务器
         for server_str in &self.config.custom_servers {
             if let Some((ip_str, port_str)) = server_str.rsplit_once(':') {
                 if let (Ok(ip), Ok(port)) = (ip_str.parse::<std::net::Ipv4Addr>(), port_str.parse::<u16>()) {
-                    bootstrap_addrs.push(SocketAddr::new(std::net::IpAddr::V4(ip), port));
+                    let kad_port = port + 11;
+                    bootstrap_addrs.push(SocketAddr::new(std::net::IpAddr::V4(ip), kad_port));
                 }
             }
         }

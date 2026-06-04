@@ -88,6 +88,8 @@ export function PluginManager({ onClose }: PluginManagerProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div
         className="bg-primary rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col animate-fade-in"
+        role="dialog"
+        aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 标题栏 */}
@@ -96,7 +98,7 @@ export function PluginManager({ onClose }: PluginManagerProps) {
             <Package size={20} />
             {t("plugin.title")}
           </h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-tertiary hover:text-text-primary transition-colors text-text-muted">
+          <button onClick={onClose} aria-label="Close" className="p-1 rounded hover:bg-tertiary hover:text-text-primary transition-colors text-text-muted">
             <X size={18} />
           </button>
         </div>

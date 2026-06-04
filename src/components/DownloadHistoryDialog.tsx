@@ -161,7 +161,7 @@ export function DownloadHistoryDialog({ onClose }: DownloadHistoryDialogProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-secondary rounded-lg shadow-xl w-[90vw] max-w-[800px] max-h-[80vh] flex flex-col border border-border" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-secondary rounded-lg shadow-xl w-[90vw] max-w-[800px] max-h-[80vh] flex flex-col border border-border" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         {/* 标题栏 */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-2">
@@ -212,6 +212,7 @@ export function DownloadHistoryDialog({ onClose }: DownloadHistoryDialogProps) {
             )}
             <button
               onClick={onClose}
+              aria-label="Close"
               className="p-1 rounded hover:bg-tertiary transition-colors text-text-secondary"
             >
               <X size={18} />

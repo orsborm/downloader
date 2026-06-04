@@ -97,6 +97,8 @@ export function ConfirmDialogContainer() {
     >
       <div
         className="bg-secondary rounded-lg shadow-xl border border-border w-[90vw] max-w-[400px] animate-slide-up"
+        role="dialog"
+        aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -108,6 +110,7 @@ export function ConfirmDialogContainer() {
           </div>
           <button
             onClick={handleCancel}
+            aria-label="Close"
             className="p-1 rounded-md hover:bg-tertiary hover:text-text-primary transition-colors text-text-muted"
           >
             <X size={16} />

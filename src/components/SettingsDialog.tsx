@@ -119,7 +119,7 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="bg-primary rounded-lg p-8 text-text-secondary">{t("common.loading")}</div>
+        <div className="bg-primary rounded-lg p-8 text-text-secondary" role="dialog" aria-modal="true">{t("common.loading")}</div>
       </div>
     );
   }
@@ -127,7 +127,7 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
   if (!config) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-        <div className="bg-primary rounded-lg shadow-xl p-8 max-w-sm mx-4 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-primary rounded-lg shadow-xl p-8 max-w-sm mx-4 animate-fade-in" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
           <p className="text-error mb-4">{t("common.error")}</p>
           <button onClick={onClose} className="px-4 py-1.5 rounded-md text-sm text-white bg-accent hover:bg-accent-hover transition-colors">
             {t("common.close")}
@@ -142,6 +142,8 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
       {/* 固定高度 600px，不随内容变化 */}
       <div
         className="bg-primary rounded-lg shadow-xl w-full max-w-4xl mx-4 h-[min(600px,90vh)] flex flex-col animate-fade-in"
+        role="dialog"
+        aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 标题栏 */}
@@ -149,6 +151,7 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
           <h2 className="text-lg font-semibold text-text-primary">{t("settings.title")}</h2>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="p-1 rounded hover:bg-tertiary hover:text-text-primary transition-colors text-text-muted"
           >
             <X size={18} />
