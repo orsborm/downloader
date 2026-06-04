@@ -385,7 +385,14 @@ impl BtEngine {
                 }),
             )
             .await
-            .context("添加 torrent 任务失败")?;
+            .map_err(|e| {
+                let msg = e.to_string();
+                if msg.contains("already") || msg.contains("duplicate") || msg.contains("exists") {
+                    anyhow::anyhow!("该种子文件已在下载列表中，请勿重复添加")
+                } else {
+                    anyhow::anyhow!("添加 torrent 任务失败: {}", msg)
+                }
+            })?;
 
         self.handle_add_response(task_id, response, update_tx).await
     }
@@ -421,7 +428,14 @@ impl BtEngine {
                 }),
             )
             .await
-            .context("添加 magnet 任务失败")?;
+            .map_err(|e| {
+                let msg = e.to_string();
+                if msg.contains("already") || msg.contains("duplicate") || msg.contains("exists") {
+                    anyhow::anyhow!("该磁力链接已在下载列表中，请勿重复添加")
+                } else {
+                    anyhow::anyhow!("添加 magnet 任务失败: {}", msg)
+                }
+            })?;
 
         self.handle_add_response(task_id, response, update_tx).await
     }

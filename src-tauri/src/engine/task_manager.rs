@@ -211,6 +211,18 @@ impl TaskManager {
         let task_id = task.id.clone();
         info!("添加任务: {} ({})", task.name, task_id);
 
+        // 检查重复的 magnet/torrent 任务（同一链接/文件只能有一个活跃任务）
+        if matches!(task.protocol, Protocol::Magnet | Protocol::Bt) {
+            for (existing_id, handle) in &self.handles {
+                if handle.protocol == task.protocol && handle.url == task.url {
+                    anyhow::bail!(
+                        "该任务已存在（任务: {}），请勿重复添加",
+                        existing_id
+                    );
+                }
+            }
+        }
+
         // 创建取消令牌和暂停信号
         let cancel_token = CancellationToken::new();
         let (pause_tx, pause_rx) = watch::channel(false);
