@@ -1,8 +1,8 @@
 # 代码审查报告 — v1.1.3
 
-> 日期：2026-06-04
+> 日期：2026-06-05
 > 版本：v1.1.3
-> 审查范围：Rust 39 files (~15,380 LOC) + React 49 files (~15,600 LOC)
+> 审查范围：Rust 39 files + React 49 files（全量深度扫描）
 > 测试：617 前端 + 125 Rust = 742 测试
 
 ---
@@ -13,81 +13,64 @@
 |---|---|
 | 安全加固 | 14 项 ✅ |
 | 稳定性修复 | 12 项 ✅ |
-| UI 修复 | 8 项 ✅ |
-| 新增功能 | 2 项（版本管理、KAD） |
-| 生产代码 unwrap/expect | **0 个** ✅ |
-| 生产代码 `let _ =`（非 channel send） | **0 个** ✅ |
+| UI/可访问性修复 | 18 项 ✅ |
+| KAD 协议修复 | 4 项 ✅ |
+| Bug 修复 | 3 项 ✅ |
+| 剩余 LOW | 20 项 |
 
 ---
 
-## v1.1.3 新增
+## 本轮修复
 
-### KAD (Kademlia DHT)
-- 持久 UDP 套接字（Arc\<UdpSocket\>），替代每请求创建新套接字
-- 启动时使用 ed2k 服务器列表作为引导节点
-- 每 5 分钟定期维护（清理过期节点、刷新路由表）
-- 状态栏实时显示 KAD 节点数和引导状态
-
-### 版本管理
-- `scripts/version.ps1` 统一管理 package.json + tauri.conf.json + Cargo.toml
-- 支持 show/major/minor/patch/set 操作
-
----
-
-## 安全加固（14 项）
-
-| 项目 | 文件 | 状态 |
+### KAD 协议修复（4 项）
+| 项目 | 文件 | 说明 |
 |------|------|------|
-| Shell 命令注入白名单 | `main.rs` | ✅ |
-| CORS localhost 白名单 | `api/mod.rs` | ✅ |
-| API Token 认证 | `api/mod.rs` | ✅ |
-| SpeedChart XSS 防护 | `SpeedChart.tsx` | ✅ |
-| WASM 沙箱 | `plugin/loader.rs` | ✅ |
-| 路径遍历防护 | `plugin/loader.rs` + `util/mod.rs` | ✅ |
-| DB 初始化安全 | `main.rs` | ✅ |
-| DB JSON 安全访问 | `storage/db.rs` | ✅ |
-| Plugin 域名白名单 | `plugin/loader.rs` | ✅ |
-| RPC 文件名验证 | `api/rpc.rs` | ✅ |
-| HTTP 客户端安全降级 | 3 处引擎文件 | ✅ |
-| API Response 安全访问 | `api/mod.rs` | ✅ |
-| DB 迁移 SQL 日志 | `storage/db.rs` | ✅ |
-| 敏感信息混淆 | `storage/config.rs` | ✅ |
+| 引导端口 | `ed2k/mod.rs` | UDP 4672 (TCP+11) 替代 TCP 4661 |
+| 距离比较 | `ed2k/kad.rs` | 完整 128 位字节比较替代 leading_zeros |
+| 源解析偏移 | `ed2k/kad.rs` | UDP+TCP 端口各 2 字节（共 4），非 4+4 |
+| 协议验证 | `ed2k/kad.rs` | 验证 0xE4 标识和操作码 |
+
+### Bug 修复（3 项）
+| 项目 | 文件 | 说明 |
+|------|------|------|
+| BT 速度截断 | `bt/mod.rs` | `as u32` → `.min(u32::MAX) as u32` 饱和转换 |
+| 错误显示 | 3 个对话框 | `String(e)` → `extractErrorMessage(e)` |
+| KAD 引导状态 | `ed2k/kad.rs` | `bootstrap_attempted` 独立于节点数 |
+
+### 可访问性修复（13 项）
+| 项目 | 文件 | 说明 |
+|------|------|------|
+| 对话框 ARIA | 10 个文件 | `role="dialog"` + `aria-modal="true"` |
+| 关闭按钮 | 10 个文件 | `aria-label="Close"` |
 
 ---
 
-## 稳定性修复（12 项）
+## 剩余 LOW 级别问题（20 项）
 
-| 项目 | 文件 | 状态 |
-|------|------|------|
-| Error Boundary | `App.tsx` | ✅ |
-| save_task_params 日志 | `commands/task.rs` | ✅ |
-| 暂停/恢复批量日志 | `commands/task.rs` | ✅ |
-| 删除任务日志 | `commands/task.rs` | ✅ |
-| 文件列表保存日志 | `commands/task.rs` | ✅ |
-| 恢复任务状态日志 | `commands/task.rs` | ✅ |
-| 启动恢复日志 | `main.rs` | ✅ |
-| RPC DB 操作日志 | `api/rpc.rs` | ✅ |
-| resume_all_tasks 竞争修复 | `commands/task.rs` | ✅ |
-| SpeedTracker unwrap 消除 | `engine/http.rs` | ✅ |
-| reqwest expect 消除 | 3 处引擎文件 | ✅ |
-| Toast 定时器清理 | `Toast.tsx` | ✅ |
-
----
-
-## UI 修复（8 项）
-
-| 项目 | 文件 | 状态 |
-|------|------|------|
-| 设置页文本换行 | `SettingsDialog.tsx` | ✅ |
-| ed2k 服务器列表布局 | `SettingsDialog.tsx` | ✅ |
-| 任务名 hover 提示 | `TaskList.tsx` | ✅ |
-| URL hover 提示 | `TaskDetail.tsx` | ✅ |
-| 文件路径/peer/tracker/mirror hover | 多个组件 | ✅ |
-| 插件描述 hover 提示 | `PluginManager.tsx` | ✅ |
-| textarea 可调整大小 | `AddTaskDialog.tsx` + `BatchImportDialog.tsx` | ✅ |
-| 删除 Dialog.tsx 死代码 | `components/Dialog.tsx` | ✅ |
+| # | 类别 | 文件 | 问题 |
+|---|------|------|------|
+| 1 | 性能 | `App.tsx` | 订阅整个 tasks Map，每秒 re-render |
+| 2 | 性能 | `Toolbar.tsx` | taskArray 每次速度更新都重建 |
+| 3 | 性能 | `TaskDetail.tsx` | LogsTab logs 数组未 memoize |
+| 4 | 性能 | `ScheduleDialog.tsx` | CRON_PRESETS/WEEKDAYS 每次渲染重建 |
+| 5 | 清理 | `TaskDetail.tsx` | LogsTab async fetch 无 mounted guard |
+| 6 | i18n | `App.tsx` | ErrorBoundary 硬编码双语文本 |
+| 7 | i18n | `App.tsx` | 拖拽提示中文 fallback |
+| 8 | i18n | `TaskDetail.tsx` | URL 验证错误中文 fallback |
+| 9 | 类型 | `PluginManager.tsx` | 使用 raw invoke 替代 typed wrapper |
+| 10 | 类型 | `Toolbar.tsx` | `as StatusFilter` 类型断言 |
+| 11 | CSS | `App.tsx` | 拖拽 z-40 低于对话框 z-50 |
+| 12 | CSS | `TaskList.tsx` | 右键菜单 z-50 与对话框相同 |
+| 13 | ARIA | `TaskList.tsx` | 排序头部缺少 aria-sort |
+| 14 | ARIA | `TaskDetail.tsx` | Tab 导航缺少 ARIA tab 角色 |
+| 15 | ARIA | `StatusBar.tsx` | 进度条缺少 role="progressbar" |
+| 16 | ARIA | `Toast.tsx` | 单条 toast 缺少 role="alert" |
+| 17 | 死代码 | `archive/password.rs` | PasswordManager 未使用 |
+| 18 | 死代码 | `hls/mod.rs` | download_segment 未调用 |
+| 19 | 死代码 | `rss/mod.rs` | matches_rules 实例方法未使用 |
+| 20 | 性能 | `plugin/loader.rs` | WASM 模块每次重新编译 |
 
 ---
 
 *审查人：Claude Code Agent*
-*最后更新：2026-06-04*
+*最后更新：2026-06-05*
