@@ -150,20 +150,26 @@ export function TaskList() {
 
   // 暂停任务
   const handlePause = useCallback(async (id: string) => {
-    await withErrorHandling(
-      () => pauseTask(id),
-      t("app.pauseTask"),
-      ErrorCode.DOWNLOAD_FAILED
-    );
+    try {
+      await pauseTask(id);
+      // 暂停后刷新任务列表，确保 UI 状态同步
+      const fresh = await getAllTasks();
+      useTaskStore.getState().setTasks(fresh);
+    } catch (e) {
+      showToast(`${t("app.pauseTask")}: ${extractErrorMessage(e)}`, "error");
+    }
   }, [t]);
 
   // 恢复任务
   const handleResume = useCallback(async (id: string) => {
-    await withErrorHandling(
-      () => resumeTask(id),
-      t("app.resumeTask"),
-      ErrorCode.DOWNLOAD_FAILED
-    );
+    try {
+      await resumeTask(id);
+      // 恢复后刷新任务列表，确保 UI 状态同步
+      const fresh = await getAllTasks();
+      useTaskStore.getState().setTasks(fresh);
+    } catch (e) {
+      showToast(`${t("app.resumeTask")}: ${extractErrorMessage(e)}`, "error");
+    }
   }, [t]);
 
   // 删除任务（成功后从 UI 移除）
