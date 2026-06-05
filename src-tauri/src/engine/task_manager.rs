@@ -463,15 +463,19 @@ impl TaskManager {
                             eta: Some(0),
                         });
                         // 持久化到 DB
-                        let _ = db_persist_tx.send(DbPersistEvent {
+                        if let Err(e) = db_persist_tx.send(DbPersistEvent {
                             task_id: task_id.clone(),
                             state: TaskState::Done,
                             downloaded: total_size,
                             total_size,
                             error: None,
-                        });
+                        }) {
+                            tracing::warn!("DB 持久化通道发送失败（任务完成进度可能丢失）: {} - {}", task_id, e);
+                        }
                         // 通知 TaskManager 清理已完成任务的句柄，释放内存
-                        let _ = cleanup_tx.send(task_id.clone());
+                        if let Err(e) = cleanup_tx.send(task_id.clone()) {
+                            tracing::warn!("清理通道发送失败（任务句柄可能泄漏）: {} - {}", task_id, e);
+                        }
                         break;
                     }
                     Err(e) => {
@@ -531,15 +535,19 @@ impl TaskManager {
                                 eta: None,
                             });
                             // 持久化到 DB
-                            let _ = db_persist_tx.send(DbPersistEvent {
+                            if let Err(e) = db_persist_tx.send(DbPersistEvent {
                                 task_id: task_id.clone(),
                                 state: TaskState::Error,
                                 downloaded,
                                 total_size,
                                 error: Some(last_error.clone()),
-                            });
+                            }) {
+                                tracing::warn!("DB 持久化通道发送失败（任务错误状态可能丢失）: {} - {}", task_id, e);
+                            }
                             // 通知 TaskManager 清理失败任务的句柄，释放内存
-                            let _ = cleanup_tx.send(task_id.clone());
+                            if let Err(e) = cleanup_tx.send(task_id.clone()) {
+                                tracing::warn!("清理通道发送失败（任务句柄可能泄漏）: {} - {}", task_id, e);
+                            }
                             break;
                         }
                     }

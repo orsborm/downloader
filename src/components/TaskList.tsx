@@ -65,6 +65,31 @@ function StateIcon({ state }: { state: string }) {
   );
 }
 
+/** 状态徽章（显示在文件名右侧，仅非 downloading 状态显示） */
+function StateBadge({ state, error }: { state: string; error?: string | null }) {
+  // downloading 状态不显示徽章（已有进度条和动画指示）
+  if (state === "downloading") return null;
+
+  const config: Record<string, { label: string; cls: string }> = {
+    paused: { label: "暂停", cls: "bg-warning/15 text-warning border-warning/30" },
+    done: { label: "完成", cls: "bg-success/15 text-success border-success/30" },
+    error: { label: "错误", cls: "bg-error/15 text-error border-error/30" },
+    seeding: { label: "做种", cls: "bg-success/15 text-success border-success/30" },
+    queued: { label: "等待", cls: "bg-text-muted/15 text-text-muted border-text-muted/30" },
+  };
+  const c = config[state];
+  if (!c) return null;
+
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border shrink-0 ${c.cls}`}
+      title={state === "error" && error ? error : undefined}
+    >
+      {state === "error" && error ? error : c.label}
+    </span>
+  );
+}
+
 /** 协议标签颜色 */
 function protocolColor(protocol: string): string {
   switch (protocol) {
@@ -148,25 +173,19 @@ export function TaskList() {
     return () => window.removeEventListener("keydown", handler);
   }, [contextMenu]);
 
-  // 暂停任务
+  // 暂停任务（后端会发送 task-update 事件自动同步 UI）
   const handlePause = useCallback(async (id: string) => {
     try {
       await pauseTask(id);
-      // 暂停后刷新任务列表，确保 UI 状态同步
-      const fresh = await getAllTasks();
-      useTaskStore.getState().setTasks(fresh);
     } catch (e) {
       showToast(`${t("app.pauseTask")}: ${extractErrorMessage(e)}`, "error");
     }
   }, [t]);
 
-  // 恢复任务
+  // 恢复任务（后端会发送 task-update 事件自动同步 UI）
   const handleResume = useCallback(async (id: string) => {
     try {
       await resumeTask(id);
-      // 恢复后刷新任务列表，确保 UI 状态同步
-      const fresh = await getAllTasks();
-      useTaskStore.getState().setTasks(fresh);
     } catch (e) {
       showToast(`${t("app.resumeTask")}: ${extractErrorMessage(e)}`, "error");
     }
@@ -256,6 +275,16 @@ export function TaskList() {
             const task = tasks[virtualItem.index];
             const isSelected = selectedIds.has(task.id);
 
+            // 状态对应的左边框颜色
+            const stateBorderColor: Record<string, string> = {
+              downloading: "border-l-accent",
+              paused: "border-l-warning",
+              done: "border-l-success",
+              error: "border-l-error",
+              seeding: "border-l-success",
+              queued: "border-l-text-muted",
+            };
+
             return (
               <div
                 key={task.id}
@@ -263,7 +292,8 @@ export function TaskList() {
                 onClick={(e) => selectTask(task.id, e.ctrlKey || e.metaKey, e.shiftKey)}
                 onContextMenu={(e) => handleContextMenu(e, task)}
                 className={`absolute top-0 left-0 w-full flex items-center px-3 text-sm cursor-pointer
-                  border-b border-border/50 transition-colors
+                  border-b border-border/50 border-l-[3px] transition-colors
+                  ${stateBorderColor[task.state] || "border-l-text-muted"}
                   ${isSelected
                     ? "bg-accent/10 border-accent/20"
                     : "hover:bg-tertiary"
@@ -278,9 +308,12 @@ export function TaskList() {
                   <StateIcon state={task.state} />
                 </div>
 
-                {/* 文件名 */}
-                <div className="flex-1 min-w-0 truncate text-text-primary" title={task.name}>
-                  {task.name}
+                {/* 文件名 + 状态标签 */}
+                <div className="flex-1 min-w-0 flex items-center gap-2">
+                  <span className="truncate text-text-primary" title={task.name}>
+                    {task.name}
+                  </span>
+                  <StateBadge state={task.state} error={task.error} />
                 </div>
 
                 {/* 协议标签 */}
