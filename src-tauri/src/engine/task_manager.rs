@@ -212,9 +212,13 @@ impl TaskManager {
         info!("添加任务: {} ({})", task.name, task_id);
 
         // 检查重复的 magnet/torrent 任务（同一链接/文件只能有一个活跃任务）
+        // 跳过已完成/已取消的任务（cancel_token 已取消 = 后台任务已结束）
         if matches!(task.protocol, Protocol::Magnet | Protocol::Bt) {
             for (_existing_id, handle) in &self.handles {
-                if handle.protocol == task.protocol && handle.url == task.url {
+                if handle.protocol == task.protocol
+                    && handle.url == task.url
+                    && !handle.cancel_token.is_cancelled()
+                {
                     anyhow::bail!(
                         "该任务已存在: {}，请勿重复添加",
                         handle.file_name
