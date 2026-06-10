@@ -4,7 +4,6 @@ import {
   ErrorCode,
   handleError,
   withErrorHandling,
-  withSyncErrorHandling,
 } from "../lib/errors";
 
 // Mock showToast
@@ -231,38 +230,6 @@ describe("withErrorHandling", () => {
   });
 });
 
-describe("withSyncErrorHandling", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("returns result on success", () => {
-    const fn = vi.fn().mockReturnValue("success");
-    const result = withSyncErrorHandling(fn, "测试操作");
-    expect(result).toBe("success");
-    expect(showToast).not.toHaveBeenCalled();
-  });
-
-  it("returns undefined on failure", () => {
-    const fn = vi.fn().mockImplementation(() => {
-      throw new Error("failed");
-    });
-    const result = withSyncErrorHandling(fn, "测试操作");
-    expect(result).toBeUndefined();
-    expect(showToast).toHaveBeenCalled();
-  });
-
-  it("shows error toast on failure", () => {
-    const fn = vi.fn().mockImplementation(() => {
-      throw new Error("permission denied");
-    });
-    withSyncErrorHandling(fn, "读取文件");
-    expect(showToast).toHaveBeenCalledWith(
-      "读取文件: 权限不足",
-      "error"
-    );
-  });
-});
 
 describe("ErrorCode", () => {
   it("has all expected error codes", () => {

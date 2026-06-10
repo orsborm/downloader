@@ -116,28 +116,36 @@ pub async fn resume_task(
     state: State<'_, AppState>,
     id: String,
 ) -> Result<(), String> {
-    // 更新数据库状态
+    // 更新数据库状态（先获取 db 锁，再获取 task_manager 锁，统一锁顺序）
     {
         let db = state.db.lock().await;
         db.update_task_state(&id, &TaskState::Downloading).map_err(|e| e.to_string())?;
     }
 
-    // 通知任务管理器
-    {
+    // 尝试恢复任务（先尝试 resume，如果需要重新添加则释放 manager 锁后再操作）
+    let needs_re_add = {
         let mut manager = state.task_manager.lock().await;
         match manager.resume_task(&id).await {
-            Ok(()) => {}
-            Err(e) if e.to_string().contains("需要重新启动") => {
-                // 任务已退出，需要重新添加
-                let db = state.db.lock().await;
-                if let Ok(Some(task)) = db.get_task(&id) {
+            Ok(()) => false,
+            Err(e) if e.to_string().contains("需要重新启动") => true,
+            Err(e) => return Err(e.to_string()),
+        }
+    };
+
+    // 任务已退出，需要重新添加（释放 manager 锁后获取 db 锁，避免死锁）
+    if needs_re_add {
+        let (task, params) = {
+            let db = state.db.lock().await;
+            let task = db.get_task(&id).map_err(|e| e.to_string())?;
+            match task {
+                Some(t) => {
                     let params = db.get_task_params(&id)
                         .ok()
                         .flatten()
                         .unwrap_or_else(|| TaskParams {
-                            url: task.url.clone(),
-                            save_path: task.save_path.clone(),
-                            file_name: Some(task.name.clone()),
+                            url: t.url.clone(),
+                            save_path: t.save_path.clone(),
+                            file_name: Some(t.name.clone()),
                             proxy: None,
                             speed_limit: None,
                             start_immediately: true,
@@ -147,13 +155,15 @@ pub async fn resume_task(
                             http_cookie: None,
                             http_headers: None,
                         });
-                    drop(db);
-                    manager.add_task(task, &params).await.map_err(|e| e.to_string())?;
-                    info!("任务已重新启动: {}", id);
+                    (t, params)
                 }
+                None => return Err("任务不存在".to_string()),
             }
-            Err(e) => return Err(e.to_string()),
-        }
+        };
+        // 重新获取 manager 锁添加任务
+        let mut manager = state.task_manager.lock().await;
+        manager.add_task(task, &params).await.map_err(|e| e.to_string())?;
+        info!("任务已重新启动: {}", id);
     }
 
     info!("任务已恢复: {}", id);

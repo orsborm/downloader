@@ -169,11 +169,6 @@ export async function removeCompletedTasks(): Promise<string[]> {
   return invoke("remove_completed_tasks");
 }
 
-/** 恢复未完成任务 */
-export async function resumeUnfinishedTasks(): Promise<string[]> {
-  return invoke("resume_unfinished_tasks");
-}
-
 /** 获取 BT 引擎状态（DHT 节点数等） */
 export async function getBtStatus(): Promise<{
   dhtNodes: number;
@@ -256,14 +251,6 @@ export async function updateArchiveConfig(
   return invoke("update_archive_config", { config });
 }
 
-/** 手动解压文件 */
-export async function extractArchive(
-  filePath: string,
-  password?: string
-): Promise<string[]> {
-  return invoke<string[]>("extract_archive", { filePath, password });
-}
-
 // ---- 插件管理 ----
 
 /** 插件信息 */
@@ -275,11 +262,6 @@ export interface PluginInfo {
   author: string;
   pluginType: string;
   state: string;
-}
-
-/** 获取插件列表 */
-export async function listPlugins(): Promise<PluginInfo[]> {
-  return invoke<PluginInfo[]>("list_plugins");
 }
 
 /** 安装插件 */
@@ -416,11 +398,6 @@ export async function getBandwidthSchedules(): Promise<BandwidthSchedule[]> {
   return invoke<BandwidthSchedule[]>("get_bandwidth_schedules");
 }
 
-/** 获取当前带宽限制 */
-export async function getCurrentBandwidthLimit(): Promise<[number, number] | null> {
-  return invoke<[number, number] | null>("get_current_bandwidth_limit");
-}
-
 /** 获取任务的 Peer 连接列表 */
 export async function getTaskPeers(id: string): Promise<PeerInfo[]> {
   return invoke<PeerInfo[]>("get_task_peers", { id });
@@ -434,16 +411,6 @@ export async function getTaskTrackers(id: string): Promise<TrackerInfo[]> {
 /** 获取任务日志 */
 export async function getTaskLogs(id: string, limit?: number): Promise<LogEntry[]> {
   return invoke<LogEntry[]>("get_task_logs", { id, limit });
-}
-
-/** 设置 RSS 订阅启用/禁用 */
-export async function setRssFeedEnabled(id: string, enabled: boolean): Promise<void> {
-  return invoke("set_rss_feed_enabled", { id, enabled });
-}
-
-/** 更新 RSS 订阅 */
-export async function updateRssFeed(id: string, name?: string, url?: string, interval?: number, saveDir?: string): Promise<void> {
-  return invoke("update_rss_feed", { id, name, url, interval, saveDir });
 }
 
 /** Peer 连接信息 */

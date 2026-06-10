@@ -711,6 +711,18 @@ impl TaskManager {
         Ok(())
     }
 
+    /// 定期清理：移除已完成/已取消的任务句柄，防止内存泄漏
+    pub fn cleanup_stale_handles(&mut self) {
+        let stale_ids: Vec<String> = self.handles.iter()
+            .filter(|(_, handle)| handle.cancel_token.is_cancelled())
+            .map(|(id, _)| id.clone())
+            .collect();
+        for id in stale_ids {
+            self.handles.remove(&id);
+            tracing::debug!("清理过期任务句柄: {}", id);
+        }
+    }
+
     /// 检查任务是否在管理器中
     pub fn has_task(&self, task_id: &str) -> bool {
         self.handles.contains_key(task_id)

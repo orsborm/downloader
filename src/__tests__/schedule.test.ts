@@ -17,7 +17,6 @@ import {
   removeBandwidthSchedule,
   updateBandwidthSchedule,
   getBandwidthSchedules,
-  getCurrentBandwidthLimit,
   type ScheduleRule,
   type BandwidthSchedule,
 } from "../lib/tauri-api";
@@ -296,24 +295,6 @@ describe("Schedule API", () => {
     });
   });
 
-  describe("getCurrentBandwidthLimit", () => {
-    it("returns limit when active", async () => {
-      mockInvoke.mockResolvedValue([1048576, 524288]);
-
-      const result = await getCurrentBandwidthLimit();
-
-      expect(mockInvoke).toHaveBeenCalledWith("get_current_bandwidth_limit");
-      expect(result).toEqual([1048576, 524288]);
-    });
-
-    it("returns null when no active limit", async () => {
-      mockInvoke.mockResolvedValue(null);
-
-      const result = await getCurrentBandwidthLimit();
-
-      expect(result).toBeNull();
-    });
-  });
 });
 
 describe("Schedule Rule Types", () => {

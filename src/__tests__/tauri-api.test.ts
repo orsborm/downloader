@@ -23,20 +23,17 @@ import {
   getRssFeeds,
   addRssFeed,
   removeRssFeed,
-  listPlugins,
   installPlugin,
   uninstallPlugin,
   enablePlugin,
   disablePlugin,
   getArchiveConfig,
   updateArchiveConfig,
-  extractArchive,
   getApiStatus,
   getBtStatus,
   pauseAllTasks,
   resumeAllTasks,
   removeCompletedTasks,
-  resumeUnfinishedTasks,
   importOpml,
   exportOpml,
 } from "../lib/tauri-api";
@@ -245,14 +242,6 @@ describe("Tauri API - Batch Operations", () => {
     });
   });
 
-  describe("resumeUnfinishedTasks", () => {
-    it("returns list of resumed task ids", async () => {
-      mockInvoke.mockResolvedValue(["task-1"]);
-      const result = await resumeUnfinishedTasks();
-      expect(mockInvoke).toHaveBeenCalledWith("resume_unfinished_tasks");
-      expect(result).toEqual(["task-1"]);
-    });
-  });
 });
 
 describe("Tauri API - Settings", () => {
@@ -419,15 +408,6 @@ describe("Tauri API - Plugins", () => {
     mockInvoke.mockClear();
   });
 
-  describe("listPlugins", () => {
-    it("returns plugins list", async () => {
-      mockInvoke.mockResolvedValue([]);
-      const result = await listPlugins();
-      expect(mockInvoke).toHaveBeenCalledWith("list_plugins");
-      expect(result).toEqual([]);
-    });
-  });
-
   describe("installPlugin", () => {
     it("calls invoke with wasm path", async () => {
       mockInvoke.mockResolvedValue("plugin-123");
@@ -498,26 +478,6 @@ describe("Tauri API - Archive", () => {
     });
   });
 
-  describe("extractArchive", () => {
-    it("calls invoke with file path", async () => {
-      mockInvoke.mockResolvedValue(["file1.txt", "file2.txt"]);
-      const result = await extractArchive("/downloads/archive.zip");
-      expect(mockInvoke).toHaveBeenCalledWith("extract_archive", {
-        filePath: "/downloads/archive.zip",
-        password: undefined,
-      });
-      expect(result).toEqual(["file1.txt", "file2.txt"]);
-    });
-
-    it("calls invoke with password", async () => {
-      mockInvoke.mockResolvedValue(["file1.txt"]);
-      await extractArchive("/downloads/protected.zip", "secret123");
-      expect(mockInvoke).toHaveBeenCalledWith("extract_archive", {
-        filePath: "/downloads/protected.zip",
-        password: "secret123",
-      });
-    });
-  });
 });
 
 describe("Tauri API - File Operations", () => {

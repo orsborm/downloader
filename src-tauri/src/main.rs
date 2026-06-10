@@ -591,16 +591,16 @@ fn main() {
                 });
             }
 
-            // KAD 定期维护：每 5 分钟清理过期节点、刷新路由表
+            // KAD 定期维护 + 句柄清理：每 5 分钟执行
             {
                 let tm = state_ref.task_manager.clone();
                 tauri::async_runtime::spawn(async move {
-                    // 等待 KAD 引导完成
                     tokio::time::sleep(std::time::Duration::from_secs(60)).await;
                     loop {
                         {
                             let mut mgr = tm.lock().await;
                             mgr.maintain_kad().await;
+                            mgr.cleanup_stale_handles();
                         }
                         tokio::time::sleep(std::time::Duration::from_secs(300)).await;
                     }

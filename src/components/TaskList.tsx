@@ -65,30 +65,51 @@ function StateIcon({ state }: { state: string }) {
   );
 }
 
+/** 状态徽章样式映射（模块级常量，避免每次渲染重建） */
+const BADGE_CLS: Record<string, string> = {
+  paused: "bg-warning/15 text-warning border-warning/30",
+  done: "bg-success/15 text-success border-success/30",
+  error: "bg-error/15 text-error border-error/30",
+  seeding: "bg-success/15 text-success border-success/30",
+  queued: "bg-text-muted/15 text-text-muted border-text-muted/30",
+};
+
+/** 状态徽章 i18n 键映射 */
+const BADGE_I18N: Record<string, string> = {
+  paused: "taskState.paused",
+  done: "taskState.done",
+  error: "taskState.error",
+  seeding: "taskState.seeding",
+  queued: "taskState.queued",
+};
+
 /** 状态徽章（显示在文件名右侧，仅非 downloading 状态显示） */
 function StateBadge({ state, error }: { state: string; error?: string | null }) {
   // downloading 状态不显示徽章（已有进度条和动画指示）
   if (state === "downloading") return null;
-
-  const config: Record<string, { label: string; cls: string }> = {
-    paused: { label: "暂停", cls: "bg-warning/15 text-warning border-warning/30" },
-    done: { label: "完成", cls: "bg-success/15 text-success border-success/30" },
-    error: { label: "错误", cls: "bg-error/15 text-error border-error/30" },
-    seeding: { label: "做种", cls: "bg-success/15 text-success border-success/30" },
-    queued: { label: "等待", cls: "bg-text-muted/15 text-text-muted border-text-muted/30" },
-  };
-  const c = config[state];
-  if (!c) return null;
+  const cls = BADGE_CLS[state];
+  if (!cls) return null;
+  const { t } = useI18n();
 
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border shrink-0 ${c.cls}`}
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border shrink-0 ${cls}`}
       title={state === "error" && error ? error : undefined}
     >
-      {state === "error" && error ? error : c.label}
+      {state === "error" && error ? error : t(BADGE_I18N[state] || "taskState.queued")}
     </span>
   );
 }
+
+/** 状态左边框颜色映射（模块级常量，避免每次渲染重建） */
+const STATE_BORDER_CLS: Record<string, string> = {
+  downloading: "border-l-accent",
+  paused: "border-l-warning",
+  done: "border-l-success",
+  error: "border-l-error",
+  seeding: "border-l-success",
+  queued: "border-l-text-muted",
+};
 
 /** 协议标签颜色 */
 function protocolColor(protocol: string): string {
@@ -275,16 +296,6 @@ export function TaskList() {
             const task = tasks[virtualItem.index];
             const isSelected = selectedIds.has(task.id);
 
-            // 状态对应的左边框颜色
-            const stateBorderColor: Record<string, string> = {
-              downloading: "border-l-accent",
-              paused: "border-l-warning",
-              done: "border-l-success",
-              error: "border-l-error",
-              seeding: "border-l-success",
-              queued: "border-l-text-muted",
-            };
-
             return (
               <div
                 key={task.id}
@@ -293,9 +304,9 @@ export function TaskList() {
                 onContextMenu={(e) => handleContextMenu(e, task)}
                 className={`absolute top-0 left-0 w-full flex items-center px-3 text-sm cursor-pointer
                   border-b border-border/50 border-l-[3px] transition-colors
-                  ${stateBorderColor[task.state] || "border-l-text-muted"}
+                  ${STATE_BORDER_CLS[task.state] || "border-l-text-muted"}
                   ${isSelected
-                    ? "bg-accent/10 border-accent/20"
+                    ? "bg-accent/10"
                     : "hover:bg-tertiary"
                   }`}
                 style={{

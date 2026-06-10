@@ -201,22 +201,3 @@ export async function withErrorHandling<T>(
   }
 }
 
-/**
- * 包装同步操作，自动处理错误
- * @param fn 同步操作
- * @param context 错误上下文描述
- * @param defaultCode 默认错误码
- * @returns 操作结果，失败时返回 undefined
- */
-export function withSyncErrorHandling<T>(
-  fn: () => T,
-  context: string,
-  defaultCode: ErrorCode = ErrorCode.UNKNOWN
-): T | undefined {
-  try {
-    return fn();
-  } catch (error) {
-    handleError(error, context, defaultCode);
-    return undefined;
-  }
-}
