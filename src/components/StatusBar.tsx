@@ -42,14 +42,25 @@ export function StatusBar() {
   const [apiPort, setApiPort] = useState(0);
   const [wsConnections, setWsConnections] = useState(0);
 
-  // 获取应用版本和 API 状态
+  // 获取应用版本（仅一次）
   useEffect(() => {
     getAppInfo()
       .then((info) => setVersion(`v${info.version}`))
       .catch(() => {});
-    getApiStatus()
-      .then((s) => { setApiPort(s.port); setWsConnections(s.wsConnections); })
-      .catch(() => {});
+  }, []);
+
+  // API 状态轮询（每 10 秒刷新端口和 WebSocket 连接数）
+  useEffect(() => {
+    let mounted = true;
+    const fetchApiStatus = async () => {
+      try {
+        const s = await getApiStatus();
+        if (mounted) { setApiPort(s.port); setWsConnections(s.wsConnections); }
+      } catch {}
+    };
+    fetchApiStatus();
+    const timer = setInterval(fetchApiStatus, 10000);
+    return () => { mounted = false; clearInterval(timer); };
   }, []);
 
   useEffect(() => {

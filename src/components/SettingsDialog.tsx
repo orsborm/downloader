@@ -532,7 +532,7 @@ function ConnectionSettings({ config, updateField }: { config: AppConfig; update
       <SettingRow label={t("settings.connection.httpPort")} description={t("settings.connection.httpPortDesc")}>
         <SettingInput
           value={config.connection.httpPort}
-          onChange={(v) => updateField("connection", "httpPort", parseInt(v) || 0)}
+          onChange={(v) => updateField("connection", "httpPort", Math.max(0, Math.min(65535, parseInt(v) || 0)))}
           type="number"
           placeholder="0"
           className="w-20"
@@ -577,7 +577,7 @@ function ConnectionSettings({ config, updateField }: { config: AppConfig; update
           <SettingRow label={t("settings.connection.proxyPort")}>
             <SettingInput
               value={config.connection.proxyPort}
-              onChange={(v) => updateField("connection", "proxyPort", parseInt(v) || 0)}
+              onChange={(v) => updateField("connection", "proxyPort", Math.max(0, Math.min(65535, parseInt(v) || 0)))}
               type="number"
               placeholder="1080"
               className="w-20"
@@ -609,7 +609,7 @@ function ConnectionSettings({ config, updateField }: { config: AppConfig; update
             <span className="text-xs text-text-muted w-16">{t("settings.connection.connectTimeout")}</span>
             <SettingInput
               value={config.connection.connectionTimeout}
-              onChange={(v) => updateField("connection", "connectionTimeout", parseInt(v) || 30)}
+              onChange={(v) => updateField("connection", "connectionTimeout", Math.max(1, parseInt(v) || 30))}
               type="number"
               placeholder="30"
               suffix={t("format.seconds")}
@@ -620,7 +620,7 @@ function ConnectionSettings({ config, updateField }: { config: AppConfig; update
             <span className="text-xs text-text-muted w-16">{t("settings.connection.readTimeout")}</span>
             <SettingInput
               value={config.connection.readTimeout}
-              onChange={(v) => updateField("connection", "readTimeout", parseInt(v) || 60)}
+              onChange={(v) => updateField("connection", "readTimeout", Math.max(1, parseInt(v) || 60))}
               type="number"
               placeholder="60"
               suffix={t("format.seconds")}
@@ -662,7 +662,7 @@ function BtSettings({ config, updateField }: { config: AppConfig; updateField: U
       <SettingRow label={t("settings.bittorrent.seedRatio")} description={t("settings.bittorrent.seedRatioDesc")}>
         <SettingInput
           value={config.bt.seedRatioLimit}
-          onChange={(v) => updateField("bt", "seedRatioLimit", parseFloat(v) || 2.0)}
+          onChange={(v) => updateField("bt", "seedRatioLimit", Math.max(0, parseFloat(v) || 2.0))}
           type="number"
           placeholder="2.0"
           className="w-20"
@@ -729,7 +729,7 @@ function NotificationSettings({ config, updateField }: { config: AppConfig; upda
       <SettingRow label={t("settings.notification.duration")}>
         <SettingInput
           value={config.notification.duration}
-          onChange={(v) => updateField("notification", "duration", parseInt(v) || 5)}
+          onChange={(v) => updateField("notification", "duration", Math.max(1, parseInt(v) || 5))}
           type="number"
           placeholder="5"
           suffix={t("format.seconds")}

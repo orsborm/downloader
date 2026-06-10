@@ -109,7 +109,33 @@ function ScheduleDialog({ open, onClose }: ScheduleDialogProps) {
   // 验证 cron 表达式格式（5 个字段：分 时 日 月 周）
   const isValidCron = (expr: string): boolean => {
     const parts = expr.trim().split(/\s+/);
-    return parts.length === 5;
+    if (parts.length !== 5) return false;
+    // 验证每个字段的值范围
+    const ranges = [
+      { min: 0, max: 59, name: "分钟" },   // 分
+      { min: 0, max: 23, name: "小时" },   // 时
+      { min: 1, max: 31, name: "日" },     // 日
+      { min: 1, max: 12, name: "月" },     // 月
+      { min: 0, max: 6, name: "周" },      // 周
+    ];
+    for (let i = 0; i < 5; i++) {
+      const part = parts[i];
+      // 跳过通配符和步进值
+      if (part === "*" || part.includes("/")) continue;
+      // 处理逗号分隔的多个值
+      const values = part.split(",");
+      for (const v of values) {
+        // 处理范围 (如 1-5)
+        if (v.includes("-")) {
+          const [a, b] = v.split("-").map(Number);
+          if (isNaN(a) || isNaN(b) || a < ranges[i].min || b > ranges[i].max || a > b) return false;
+        } else {
+          const num = parseInt(v);
+          if (isNaN(num) || num < ranges[i].min || num > ranges[i].max) return false;
+        }
+      }
+    }
+    return true;
   };
 
   // 规则操作

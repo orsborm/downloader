@@ -34,8 +34,13 @@ export function BatchImportDialog({ onClose }: BatchImportDialogProps) {
 
     if (mode === "wildcard" && wildcardPattern) {
       // 通配符生成
-      const start = parseInt(rangeStart) || 1;
-      const end = parseInt(rangeEnd) || 100;
+      const start = Math.max(1, parseInt(rangeStart) || 1);
+      const end = Math.max(start, parseInt(rangeEnd) || 100);
+      const count = end - start + 1;
+      // 限制最大生成数量，防止性能问题
+      if (count > 10000) {
+        return [`通配符范围过大（${count} 个），最大支持 10000 个`];
+      }
       const lines: string[] = [];
       for (let i = start; i <= end; i++) {
         const num = padding > 0 ? String(i).padStart(padding, "0") : String(i);
