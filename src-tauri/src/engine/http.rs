@@ -92,9 +92,17 @@ impl SpeedTracker {
 impl HttpEngine {
     /// 创建新的 HTTP 引擎（优化连接池和 TCP 参数）
     pub fn new() -> Self {
+        Self::with_timeout(30, 60)
+    }
+
+    /// 使用自定义超时创建 HTTP 引擎
+    /// - `connect_timeout`: 连接超时（秒）
+    /// - `read_timeout`: 读取超时（秒）
+    pub fn with_timeout(connect_timeout: u64, read_timeout: u64) -> Self {
         let client = reqwest::Client::builder()
             .user_agent(USER_AGENT)
-            .timeout(Duration::from_secs(30))
+            .timeout(Duration::from_secs(read_timeout.max(1)))
+            .connect_timeout(Duration::from_secs(connect_timeout.max(1)))
             .redirect(reqwest::redirect::Policy::limited(10))
             // 连接池优化：保持连接活跃，减少握手开销
             .pool_idle_timeout(Duration::from_secs(90))

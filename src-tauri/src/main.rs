@@ -150,6 +150,8 @@ fn main() {
                 config.download.max_upload_speed,
                 config.download.max_download_speed,
                 bt_config,
+                config.connection.connection_timeout,
+                config.connection.read_timeout,
             );
             task_manager.set_retry_config(
                 config.download.auto_retry_count,

@@ -126,6 +126,9 @@ pub struct BtEngine {
     metadata_cache: HashMap<String, TorrentFileListResponse>,
 }
 
+/// 元数据缓存最大条目数
+const MAX_METADATA_CACHE: usize = 100;
+
 impl BtEngine {
     /// 创建新的 BT 引擎
     pub fn new(config: BtConfig) -> Self {
@@ -302,7 +305,12 @@ impl BtEngine {
                     total_size,
                     files,
                 };
-                // 缓存解析结果，避免重复解析
+                // 缓存解析结果，避免重复解析（超过上限时清空最旧条目）
+                if self.metadata_cache.len() >= MAX_METADATA_CACHE {
+                    if let Some(first_key) = self.metadata_cache.keys().next().cloned() {
+                        self.metadata_cache.remove(&first_key);
+                    }
+                }
                 self.metadata_cache.insert(torrent_source.to_string(), response.clone());
                 Ok(response)
             }
@@ -472,6 +480,7 @@ impl BtEngine {
 
         // 启动进度监控后台任务（可通过 cancel_token 取消）
         let tid = task_id.to_string();
+        let session_ref = self.session.clone();
         tokio::spawn(async move {
             let mut last_update = tokio::time::Instant::now();
             loop {
@@ -523,10 +532,14 @@ impl BtEngine {
                     });
                     info!("BT 任务下载完成: {}，进入做种阶段", tid);
 
-                    // 全局停止做种：下载完成后立即暂停（通过发送取消信号停止监控）
+                    // 全局停止做种：下载完成后立即暂停种子
                     if stop_seeding {
+                        if let Some(ref sess) = session_ref {
+                            if let Err(e) = sess.pause(&handle).await {
+                                tracing::warn!("停止做种失败: {} - {}", tid, e);
+                            }
+                        }
                         info!("全局停止做种已启用，BT 任务完成: {}", tid);
-                        // 不再进入做种循环，直接返回
                         return;
                     }
 
@@ -548,11 +561,21 @@ impl BtEngine {
 
                         // 检查做种比率限制
                         if seed_ratio_limit > 0.0 && seed_ratio >= seed_ratio_limit {
+                            if let Some(ref sess) = session_ref {
+                                if let Err(e) = sess.pause(&handle).await {
+                                    tracing::warn!("停止做种失败: {} - {}", tid, e);
+                                }
+                            }
                             info!("BT 做种比率达标 ({} >= {})，停止做种: {}", seed_ratio, seed_ratio_limit, tid);
                             return;
                         }
                         // 检查做种时间限制
                         if seed_time_limit > 0 && seed_minutes >= seed_time_limit {
+                            if let Some(ref sess) = session_ref {
+                                if let Err(e) = sess.pause(&handle).await {
+                                    tracing::warn!("停止做种失败: {} - {}", tid, e);
+                                }
+                            }
                             info!("BT 做种时间达标 ({}min >= {}min)，停止做种: {}", seed_minutes, seed_time_limit, tid);
                             return;
                         }

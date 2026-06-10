@@ -57,6 +57,13 @@ export function Toolbar({
   const setSearchQuery = useTaskStore((s) => s.setSearchQuery);
   const statusFilter = useTaskStore((s) => s.statusFilter);
   const setStatusFilter = useTaskStore((s) => s.setStatusFilter);
+
+  // 搜索防抖：避免每次按键都触发排序重算
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = useCallback((value: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setSearchQuery(value), 150);
+  }, [setSearchQuery]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // 缓存任务数组，避免每次渲染都重新创建
@@ -184,7 +191,7 @@ export function Toolbar({
             ref={searchInputRef}
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder={`${t("toolbar.searchPlaceholder")} (Ctrl+F)`}
             className="pl-6 pr-6 py-1 text-xs bg-tertiary border border-border rounded-md
                        text-text-primary placeholder:text-text-muted

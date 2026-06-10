@@ -773,12 +773,23 @@ impl KadEngine {
     }
 }
 
-/// 辅助函数：生成随机字节
+/// 辅助函数：生成随机字节（使用 xorshift64 提高随机性）
 fn rand_byte() -> u8 {
+    use std::cell::Cell;
     use std::time::{SystemTime, UNIX_EPOCH};
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .subsec_nanos();
-    (nanos & 0xFF) as u8
+    // 线程局部 xorshift64 状态
+    thread_local! {
+        static STATE: Cell<u64> = Cell::new(
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos() as u64
+        );
+    }
+    STATE.with(|s| {
+        let mut x = s.get();
+        if x == 0 { x = 1; }
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        s.set(x);
+        (x & 0xFF) as u8
+    })
 }

@@ -105,6 +105,8 @@ impl TaskManager {
         max_upload_speed: u64,
         max_download_speed: u64,
         bt_config: BtConfig,
+        connect_timeout: u64,
+        read_timeout: u64,
     ) -> Self {
         let (update_tx, update_rx) = mpsc::unbounded_channel();
         let (db_persist_tx, db_persist_rx) = mpsc::unbounded_channel();
@@ -131,7 +133,7 @@ impl TaskManager {
         TaskManager {
             semaphore: Arc::new(Semaphore::new(max_concurrent)),
             handles: HashMap::new(),
-            http_engine: HttpEngine::new(),
+            http_engine: HttpEngine::with_timeout(connect_timeout, read_timeout),
             bt_engine: BtEngine::new(bt_config),
             hls_engine: HlsEngine::new(),
             ed2k_engine: Ed2kEngine::new(Ed2kConfig::default()),
